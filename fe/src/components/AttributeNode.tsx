@@ -82,9 +82,7 @@ const AttributeNode: React.FC<NodeProps> = ({ data }) => {
             >
               <SelectItem key={AttributeType.STRING}>String</SelectItem>
               <SelectItem key={AttributeType.INT}>Integer</SelectItem>
-              {!isNested ? (
-                <SelectItem key={AttributeType.NESTED}>Nested</SelectItem>
-              ) : null}
+              <SelectItem key={AttributeType.NESTED}>Nested</SelectItem>
             </Select>
 
             <Input
@@ -121,8 +119,7 @@ const AttributeNode: React.FC<NodeProps> = ({ data }) => {
               onChange={(e) => onAttributeChange("description", e.target.value)}
             />
 
-            {!isNested &&
-              attribute.type === AttributeType.NESTED &&
+            {attribute.type === AttributeType.NESTED &&
               onAddNestedAttribute && (
                 <Button
                   fullWidth

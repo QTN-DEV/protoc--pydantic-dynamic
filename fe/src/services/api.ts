@@ -1,6 +1,19 @@
-import { PydanticClassRequest, GenerateResponse } from "@/types/pydantic";
+import {
+  PydanticClassRequest,
+  GenerateResponse,
+  PydanticAttribute,
+} from "@/types/pydantic";
 
 const API_BASE_URL = "http://localhost:8000";
+
+const serializeAttribute = (attr: PydanticAttribute): any => ({
+  name: attr.name,
+  type: attr.type,
+  nullable: attr.nullable,
+  description: attr.description,
+  default_value: attr.defaultValue,
+  nested_attributes: attr.nestedAttributes?.map(serializeAttribute),
+});
 
 export const apiService = {
   async generatePydantic(
@@ -14,20 +27,7 @@ export const apiService = {
       body: JSON.stringify({
         class_name: request.className,
         class_description: request.classDescription,
-        attributes: request.attributes.map((attr) => ({
-          name: attr.name,
-          type: attr.type,
-          nullable: attr.nullable,
-          description: attr.description,
-          default_value: attr.defaultValue,
-          nested_attributes: attr.nestedAttributes?.map((nestedAttr) => ({
-            name: nestedAttr.name,
-            type: nestedAttr.type,
-            nullable: nestedAttr.nullable,
-            description: nestedAttr.description,
-            default_value: nestedAttr.defaultValue,
-          })),
-        })),
+        attributes: request.attributes.map(serializeAttribute),
         prompt: request.prompt,
       }),
     });
