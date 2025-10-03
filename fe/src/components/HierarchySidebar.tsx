@@ -65,21 +65,19 @@ const HierarchySidebar: React.FC<HierarchySidebarProps> = ({
             <div className="ml-4 space-y-1">
               {hierarchy.map((item, index) => (
                 <div key={item.node.id} className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 flex items-center justify-between">
-                      <div className="text-sm font-medium text-success-700">
-                        {item.attribute.name || `Attribute ${index + 1}`}
-                      </div>
-                      <div className="flex gap-1">
-                        <Chip color="success" size="sm" variant="flat">
-                          {item.attribute.type}
+                  <div className="flex items-center gap-2 justify-between">
+                    <div className="text-sm font-medium text-success-700">
+                      {item.attribute.name || `Attribute ${index + 1}`}
+                    </div>
+                    <div className="flex gap-1">
+                      <Chip color="success" size="sm" variant="flat">
+                        {item.attribute.type}
+                      </Chip>
+                      {item.attribute.nullable && (
+                        <Chip color="warning" size="sm" variant="flat">
+                          Nullable
                         </Chip>
-                        {item.attribute.nullable && (
-                          <Chip color="warning" size="sm" variant="flat">
-                            Nullable
-                          </Chip>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
 
@@ -89,23 +87,21 @@ const HierarchySidebar: React.FC<HierarchySidebarProps> = ({
                       {item.nested.map((nestedItem, nestedIndex) => (
                         <div
                           key={nestedItem.node.id}
-                          className="flex items-center gap-2"
+                          className="flex items-center gap-2 justify-between"
                         >
-                          <div>
-                            <div className="text-xs font-medium text-secondary-700">
-                              {nestedItem.attribute.name ||
-                                `Nested ${nestedIndex + 1}`}
-                            </div>
-                            <div className="flex gap-1">
-                              <Chip color="secondary" size="sm" variant="flat">
-                                {nestedItem.attribute.type}
+                          <div className="text-xs font-medium text-secondary-700">
+                            {nestedItem.attribute.name ||
+                              `Nested ${nestedIndex + 1}`}
+                          </div>
+                          <div className="flex gap-1">
+                            <Chip color="secondary" size="sm" variant="flat">
+                              {nestedItem.attribute.type}
+                            </Chip>
+                            {nestedItem.attribute.nullable && (
+                              <Chip color="warning" size="sm" variant="flat">
+                                Nullable
                               </Chip>
-                              {nestedItem.attribute.nullable && (
-                                <Chip color="warning" size="sm" variant="flat">
-                                  Nullable
-                                </Chip>
-                              )}
-                            </div>
+                            )}
                           </div>
                         </div>
                       ))}
