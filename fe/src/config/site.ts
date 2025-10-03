@@ -9,6 +9,5 @@ export const siteConfig = {
       href: "/",
     },
   ],
-  navMenuItems: [
-  ],
+  navMenuItems: [],
 };

@@ -1,17 +1,19 @@
+import { useState } from "react";
 
-import { useState } from 'react';
-import DefaultLayout from "@/layouts/default";
-import PydanticForm from "@/components/PydanticForm";
+import PydanticFlowCanvas from "@/components/PydanticFlowCanvas";
 import { apiService } from "@/services/api";
 import { PydanticClassRequest, GenerateResponse } from "@/types/pydantic";
 
 export default function IndexPage() {
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleFormSubmit = async (data: PydanticClassRequest): Promise<GenerateResponse> => {
+  const handleFormSubmit = async (
+    data: PydanticClassRequest,
+  ): Promise<GenerateResponse> => {
     setIsLoading(true);
     try {
       const response = await apiService.generatePydantic(data);
+
       return response;
     } finally {
       setIsLoading(false);
@@ -19,8 +21,6 @@ export default function IndexPage() {
   };
 
   return (
-    <DefaultLayout>
-      <PydanticForm onSubmit={handleFormSubmit} isLoading={isLoading} />
-    </DefaultLayout>
+    <PydanticFlowCanvas isLoading={isLoading} onSubmit={handleFormSubmit} />
   );
 }
