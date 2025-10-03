@@ -47,10 +47,11 @@ const AttributeNode: React.FC<NodeProps> = ({ data }) => {
                 {isNested ? "Nested Attribute" : "Attribute"}
               </h4>
               <Button
+                isIconOnly
                 color="danger"
                 size="sm"
                 variant="light"
-                onClick={onRemoveAttribute}
+                onPress={onRemoveAttribute}
               >
                 ×
               </Button>
@@ -67,6 +68,7 @@ const AttributeNode: React.FC<NodeProps> = ({ data }) => {
             />
 
             <Select
+              isClearable={false}
               label="Type"
               placeholder="Select type"
               selectedKeys={[attribute.type]}
@@ -127,7 +129,7 @@ const AttributeNode: React.FC<NodeProps> = ({ data }) => {
                   color="secondary"
                   size="sm"
                   variant="flat"
-                  onClick={onAddNestedAttribute}
+                  onPress={onAddNestedAttribute}
                 >
                   + Add Nested Attribute
                 </Button>

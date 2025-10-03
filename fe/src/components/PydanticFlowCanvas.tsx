@@ -11,6 +11,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { Textarea, Button } from "@heroui/react";
 import Swal from "sweetalert2";
+import {v7 as uuidv7} from "uuid";
 
 import ClassDefinitionNode from "./ClassDefinitionNode";
 import AttributeNode from "./AttributeNode";
@@ -41,7 +42,6 @@ const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
   const [prompt, setPrompt] = useState("");
   const [className, setClassName] = useState("");
   const [classDescription, setClassDescription] = useState("");
-  const [attributeCounter, setAttributeCounter] = useState(0);
   const [apiResponse, setApiResponse] = useState<any>(null);
 
   const initialNodes: Node[] = [];
@@ -89,14 +89,10 @@ const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
         return node;
       }),
     );
-  }, [className, classDescription, attributeCounter]); // Add attributeCounter as dependency
+  }, [className, classDescription]);
 
   const addAttribute = (parentId = "class-definition", isNested = false) => {
-    // Use current counter value and then increment
-    const currentCounter = attributeCounter;
-    const newAttributeId = `attribute-${currentCounter}`;
-
-    setAttributeCounter((prev) => prev + 1);
+    const newAttributeId = `attribute-${uuidv7()}`;
 
     const newAttribute: PydanticAttribute = {
       name: "",

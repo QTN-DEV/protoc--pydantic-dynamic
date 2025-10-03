@@ -2,7 +2,7 @@ import React from "react";
 import { Chip } from "@heroui/react";
 import { Node, Edge } from "@xyflow/react";
 
-import { AttributeType, PydanticAttribute } from "@/types/pydantic";
+import { PydanticAttribute } from "@/types/pydantic";
 
 interface HierarchySidebarProps {
   nodes: Node[];
@@ -40,19 +40,6 @@ const HierarchySidebar: React.FC<HierarchySidebarProps> = ({
   };
 
   const hierarchy = buildHierarchy();
-
-  const getTypeIcon = (type: AttributeType) => {
-    switch (type) {
-      case AttributeType.STRING:
-        return "📝";
-      case AttributeType.INT:
-        return "🔢";
-      case AttributeType.NESTED:
-        return "🔗";
-      default:
-        return "❓";
-    }
-  };
 
   return (
     <div className="fixed left-4 top-4 z-20 w-80 h-[80vh] overflow-y-auto border rounded-lg p-4 bg-white/80 backdrop-blur-sm">
