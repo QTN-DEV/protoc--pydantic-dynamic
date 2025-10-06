@@ -179,7 +179,7 @@ const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
           const updatedAttribute = { ...currentAttribute, [field]: value };
 
           // Clear nested attributes if type is no longer NESTED
-          if (field === "type" && value !== AttributeType.NESTED) {
+          if (field === "type" && value !== AttributeType.NESTED && value !== AttributeType.LIST_NESTED) {
             updatedAttribute.nestedAttributes = undefined;
           }
 
@@ -222,7 +222,7 @@ const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
       const attribute = { ...(attributeNode.data as any).attribute };
 
       // If this attribute has nested attributes
-      if (attribute.type === AttributeType.NESTED) {
+      if (attribute.type === AttributeType.NESTED || attribute.type === AttributeType.LIST_NESTED) {
         const nestedAttributeNodes = attributeNodes.filter((n) => {
           return edges.some(
             (e) => e.source === attributeNode.id && e.target === n.id,

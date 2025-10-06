@@ -57,6 +57,28 @@ def create_pydantic_model_from_attributes(class_name: str, attributes: List[Pyda
             else:
                 default_value = ...
 
+        elif attr.type == AttributeType.LIST_STRING:
+            field_type = List[str]
+            if attr.nullable:
+                field_type = Optional[List[str]]
+                default_value = None
+            else:
+                default_value = []
+
+        elif attr.type == AttributeType.LIST_NESTED:
+            if not attr.nested_attributes:
+                raise ValueError(f"List nested attribute {attr.name} must have nested_attributes")
+
+            nested_class_name = f"{attr.name.capitalize()}Item"
+            nested_model = create_pydantic_model_from_attributes(nested_class_name, attr.nested_attributes)
+            field_type = List[nested_model]
+
+            if attr.nullable:
+                field_type = Optional[List[nested_model]]
+                default_value = None
+            else:
+                default_value = []
+
         fields[attr.name] = (field_type, default_value)
 
     return create_model(class_name, **fields)

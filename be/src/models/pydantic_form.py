@@ -6,6 +6,8 @@ class AttributeType(str, Enum):
     STRING = "string"
     INT = "int"
     NESTED = "nested"
+    LIST_STRING = "list_string"
+    LIST_NESTED = "list_nested"
 
 class PydanticAttribute(BaseModel):
     name: str

@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@heroui/react";
 import Swal from "sweetalert2";
-import yaml from "js-yaml";
 
 interface ResponseSidebarProps {
   response: any;
@@ -35,22 +34,74 @@ const ResponseSidebar: React.FC<ResponseSidebarProps> = ({
     setIsMaximized(!isMaximized);
   };
 
-  const convertToYaml = (data: any) => {
-    try {
-      return yaml.dump(data, {
-        indent: 2,
-        lineWidth: -1,
-        noRefs: true,
-        sortKeys: false,
+  const renderHumanFriendlyData = (data: any, depth: number = 0): JSX.Element[] => {
+    const elements: JSX.Element[] = [];
+    const paddingLeft = depth * 18; // 18px per level
+    const headingSize = Math.max(1, 4 - depth); // h1 to h4, then h4 for deeper levels
+
+    if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+      Object.entries(data).forEach(([key, value], index) => {
+        const HeadingTag = `h${Math.min(headingSize, 6)}` as keyof JSX.IntrinsicElements;
+
+        elements.push(
+          <div key={`${depth}-${key}-${index}`} className="mb-2" style={{ paddingLeft: `${paddingLeft}px` }}>
+            <HeadingTag className="font-bold text-gray-800 mt-4 first:mt-0">
+              {key.split(" ").map(e => e.charAt(0).toUpperCase() + e.slice(1)).join(" ")}
+            </HeadingTag>
+            <div>
+              {typeof value === 'object' && value !== null ? (
+                <div>
+                  {renderHumanFriendlyData(value, depth + 1)}
+                </div>
+              ) : Array.isArray(value) ? (
+                <div>
+                  {value.map((item, i) => (
+                    <div key={`${key}-item-${i}`} className="mb-2">
+                      {typeof item === 'object' && item !== null ? (
+                        <div>
+                          <div className="font-medium text-gray-600 mb-1">Item {i + 1}:</div>
+                          {renderHumanFriendlyData(item, depth + 1)}
+                        </div>
+                      ) : (
+                        <div className="text-gray-700">• {String(item)}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-gray-700 whitespace-pre-wrap break-words">
+                  {String(value)}
+                </div>
+              )}
+            </div>
+          </div>
+        );
       });
-    } catch (error) {
-      console.error("Error converting to YAML:", error);
-
-      return `# Error converting to YAML\n# ${error instanceof Error ? error.message : "Unknown error"}`;
+    } else if (Array.isArray(data)) {
+      data.forEach((item, index) => {
+        elements.push(
+          <div key={`array-${index}`} style={{ paddingLeft: `${paddingLeft}px` }} className="mb-1">
+            {typeof item === 'object' && item !== null ? (
+              <div>
+                <div className="font-medium text-gray-600 mb-1">Item {index + 1}:</div>
+                {renderHumanFriendlyData(item, depth + 1)}
+              </div>
+            ) : (
+              <div className="text-gray-700">• {String(item)}</div>
+            )}
+          </div>
+        );
+      });
+    } else {
+      elements.push(
+        <div key={`primitive-${depth}`} style={{ paddingLeft: `${paddingLeft}px` }} className="text-gray-700">
+          {String(data)}
+        </div>
+      );
     }
-  };
 
-  const yamlContent = convertToYaml(response.result);
+    return elements;
+  };
 
   const sidebarStyles = isMaximized
     ? "fixed top-0 left-0 right-0 bottom-0 z-30"
@@ -58,7 +109,7 @@ const ResponseSidebar: React.FC<ResponseSidebarProps> = ({
 
   return (
     <div
-      className={`${sidebarStyles} overflow-y-auto border rounded-lg p-4 bg-white/80 backdrop-blur-sm`}
+      className={`${sidebarStyles} overflow-y-auto  border border-gray-300 rounded-lg p-4 bg-white/80 backdrop-blur-sm`}
     >
       <div className="space-y-3 h-full flex flex-col">
         {/* Header with controls */}
@@ -85,10 +136,10 @@ const ResponseSidebar: React.FC<ResponseSidebarProps> = ({
           </Button>
         </div>
 
-        {/* YAML Content */}
-        <pre className="text-xs overflow-auto h-full whitespace-pre-wrap break-words">
-          {yamlContent}
-        </pre>
+        {/* Human-Friendly Content */}
+        <div className="text-sm overflow-auto h-full">
+          {renderHumanFriendlyData(response.result)}
+        </div>
       </div>
     </div>
   );

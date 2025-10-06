@@ -2,6 +2,8 @@ export enum AttributeType {
   STRING = "string",
   INT = "int",
   NESTED = "nested",
+  LIST_STRING = "list_string",
+  LIST_NESTED = "list_nested",
 }
 
 export interface PydanticAttribute {

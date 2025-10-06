@@ -42,14 +42,8 @@ const HierarchySidebar: React.FC<HierarchySidebarProps> = ({
   const hierarchy = buildHierarchy();
 
   return (
-    <div className="fixed left-4 top-4 z-20 w-80 h-[80vh] overflow-y-auto border rounded-lg p-4 bg-white/80 backdrop-blur-sm">
+    <div className="fixed left-4 top-4 z-20 w-80 h-[80vh] overflow-y-auto border border-gray-300 rounded-lg p-4 bg-white/80 backdrop-blur-sm">
       <div className="space-y-3">
-        <div className="border-b pb-2">
-          <h3 className="font-semibold text-primary-600 flex items-center gap-2">
-            🏗️ Class Structure
-          </h3>
-        </div>
-
         {/* Class Node */}
         <div className="space-y-1">
           <div className="flex items-center gap-2">
