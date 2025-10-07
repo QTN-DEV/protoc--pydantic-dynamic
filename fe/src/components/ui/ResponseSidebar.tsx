@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Button } from "@heroui/react";
 import Swal from "sweetalert2";
 
 import { renderHumanFriendlyData } from "@/utils/rendering";
@@ -47,26 +46,20 @@ const ResponseSidebar: React.FC<ResponseSidebarProps> = ({
       <div className="space-y-3 h-full flex flex-col">
         {/* Header with controls */}
         <div className="flex items-center gap-2 absolute top-2 right-2">
-          <Button
-            isIconOnly
-            color="primary"
-            size="sm"
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
             title={isMaximized ? "Minimize" : "Maximize"}
-            variant="flat"
-            onPress={toggleMaximize}
+            onClick={toggleMaximize}
           >
             {isMaximized ? "🗗" : "🗖"}
-          </Button>
-          <Button
-            isIconOnly
-            color="danger"
-            size="sm"
+          </button>
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
             title="Close"
-            variant="flat"
-            onPress={handleClose}
+            onClick={handleClose}
           >
             ✕
-          </Button>
+          </button>
         </div>
 
         {/* Human-Friendly Content */}

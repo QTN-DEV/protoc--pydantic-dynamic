@@ -1,15 +1,4 @@
 import React, { useState } from "react";
-import {
-  Button,
-  Card,
-  CardBody,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Textarea,
-} from "@heroui/react";
 import Swal from "sweetalert2";
 
 interface AIGeneratorCardProps {
@@ -100,100 +89,94 @@ export const AIGeneratorCard: React.FC<AIGeneratorCardProps> = ({
     });
   };
 
+  if (!isOpen) return null;
+
   return (
-    <Modal
-      isOpen={isOpen}
-      scrollBehavior="inside"
-      size="2xl"
-      onOpenChange={onOpenChange}
-    >
-        <ModalContent>
-          {() => (
-            <>
-              <ModalHeader className="flex items-center justify-between">
-                <span>AI Generator</span>
-                <Button
-                  isIconOnly
-                  size="sm"
-                  variant="light"
-                  onPress={showHelp}
-                >
-                  ?
-                </Button>
-              </ModalHeader>
-              <ModalBody>
-                <div className="space-y-4">
-                  {/* System Prompt */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-semibold text-gray-700">
-                        System Prompt
-                      </label>
-                      <span className="text-xs text-gray-500">
-                        (saved automatically)
-                      </span>
-                    </div>
-                    <Textarea
-                      minRows={4}
-                      placeholder="Enter system instructions for the AI model..."
-                      value={systemPrompt}
-                      onChange={(e) => onSystemPromptChange(e.target.value)}
-                    />
-                  </div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <span className="text-lg font-semibold">AI Generator</span>
+          <button
+            className="w-8 h-8 text-lg text-gray-600 hover:text-gray-800 transition-colors"
+            onClick={showHelp}
+          >
+            ?
+          </button>
+        </div>
 
-                  {/* Prompt Test */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-semibold text-gray-700">
-                        Prompt Test
-                      </label>
-                      <span className="text-xs text-gray-500">
-                        (temporary, for testing)
-                      </span>
-                    </div>
-                    <Textarea
-                      minRows={4}
-                      placeholder="Enter a test prompt to generate data..."
-                      value={promptTest}
-                      onChange={(e) => setPromptTest(e.target.value)}
-                    />
-                  </div>
+        {/* Body */}
+        <div className="px-6 py-4 overflow-y-auto flex-1">
+          <div className="space-y-4">
+            {/* System Prompt */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-semibold text-gray-700">
+                  System Prompt
+                </label>
+                <span className="text-xs text-gray-500">
+                  (saved automatically)
+                </span>
+              </div>
+              <textarea
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                placeholder="Enter system instructions for the AI model..."
+                rows={4}
+                value={systemPrompt}
+                onChange={(e) => onSystemPromptChange(e.target.value)}
+              />
+            </div>
 
-                  {/* Info card */}
-                  <Card className="bg-purple-50 border border-purple-200">
-                    <CardBody className="p-3">
-                      <p className="text-sm text-purple-700">
-                        <strong>💡 How it works:</strong> The AI will generate
-                        structured data based on your graph&apos;s Pydantic
-                        schema. The system prompt provides context, and the test
-                        prompt describes what you want to generate.
-                      </p>
-                    </CardBody>
-                  </Card>
-                </div>
-              </ModalBody>
-              <ModalFooter>
-                <Button
-                  color="danger"
-                  variant="light"
-                  onPress={() => onOpenChange(false)}
-                >
-                  Close
-                </Button>
-                {promptTest.trim() && (
-                  <Button
-                    className="bg-purple-500 text-white"
-                    isDisabled={isGenerating}
-                    isLoading={isGenerating}
-                    onPress={handleGenerate}
-                  >
-                    Start Generation
-                  </Button>
-                )}
-              </ModalFooter>
-            </>
+            {/* Prompt Test */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-semibold text-gray-700">
+                  Prompt Test
+                </label>
+                <span className="text-xs text-gray-500">
+                  (temporary, for testing)
+                </span>
+              </div>
+              <textarea
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                placeholder="Enter a test prompt to generate data..."
+                rows={4}
+                value={promptTest}
+                onChange={(e) => setPromptTest(e.target.value)}
+              />
+            </div>
+
+            {/* Info card */}
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+              <p className="text-sm text-purple-700">
+                <strong>💡 How it works:</strong> The AI will generate
+                structured data based on your graph&apos;s Pydantic
+                schema. The system prompt provides context, and the test
+                prompt describes what you want to generate.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+          <button
+            className="px-4 py-2 rounded-lg font-medium transition-colors text-red-600 hover:text-red-700"
+            onClick={() => onOpenChange(false)}
+          >
+            Close
+          </button>
+          {promptTest.trim() && (
+            <button
+              className="px-4 py-2 rounded-lg font-medium transition-colors bg-purple-500 text-white hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isGenerating}
+              onClick={handleGenerate}
+            >
+              {isGenerating ? "Generating..." : "Start Generation"}
+            </button>
           )}
-        </ModalContent>
-      </Modal>
+        </div>
+      </div>
+    </div>
   );
 };

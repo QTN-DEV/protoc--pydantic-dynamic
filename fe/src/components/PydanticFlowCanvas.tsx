@@ -12,7 +12,6 @@ import {
   ReactFlowProvider,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { Textarea, Button } from "@heroui/react";
 import Swal from "sweetalert2";
 import { v7 as uuidv7 } from "uuid";
 
@@ -662,27 +661,29 @@ const PydanticFlowCanvasInner: React.FC<PydanticFlowCanvasInnerProps> = ({
 
       {/* Fixed Prompt Input */}
       <div className="hidden absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-3xl px-4">
-        <Textarea
-          className="bg-white/95 backdrop-blur-sm shadow-lg rounded-lg"
-          label="Prompt"
-          minRows={3}
-          placeholder="Describe what you want OpenAI to generate using your Pydantic class..."
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-        />
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">
+            Prompt
+          </label>
+          <textarea
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white/95 backdrop-blur-sm shadow-lg"
+            placeholder="Describe what you want OpenAI to generate using your Pydantic class..."
+            rows={3}
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+          />
+        </div>
       </div>
 
       {/* Floating Action Button */}
       <div className="hidden fixed bottom-4 right-4 z-10">
-        <Button
-          className="shadow-lg"
-          color="primary"
-          isLoading={isLoading}
-          size="lg"
-          onPress={handleSubmit}
+        <button
+          className="px-6 py-3 rounded-lg font-medium transition-colors shadow-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isLoading}
+          onClick={handleSubmit}
         >
           {isLoading ? "Generating..." : "Generate with OpenAI"}
-        </Button>
+        </button>
       </div>
 
       <ReactFlow

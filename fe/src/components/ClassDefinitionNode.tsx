@@ -1,6 +1,5 @@
 import React from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
-import { Card, CardBody, Button } from "@heroui/react";
 
 import { usePydanticFlow } from "@/contexts/PydanticFlowContext";
 
@@ -17,11 +16,11 @@ const ClassDefinitionNode: React.FC<NodeProps> = ({ data, id }) => {
     <div className="min-w-[300px]">
       <Handle position={Position.Top} style={{ opacity: 0 }} type="target" />
 
-      <Card className="shadow-lg border-2 border-primary-200">
-        <CardBody className="p-4">
+      <div className="bg-white rounded-lg shadow-lg border-2 border-blue-200">
+        <div className="p-4">
           <div className="space-y-4">
             <div className="text-center">
-              <h3 className="text-lg font-semibold text-primary-600 mb-2">
+              <h3 className="text-lg font-semibold text-blue-600 mb-2">
                 {nodeData.className || "Class Definition"}
               </h3>
               {nodeData.classDescription && (
@@ -32,20 +31,16 @@ const ClassDefinitionNode: React.FC<NodeProps> = ({ data, id }) => {
             </div>
 
             <div className="flex justify-center">
-              <Button
-                isIconOnly
-                color="primary"
-                radius="full"
-                size="lg"
-                variant="flat"
-                onPress={() => addAttribute(id)}
+              <button
+                className="w-12 h-12 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors flex items-center justify-center text-2xl font-bold"
+                onClick={() => addAttribute(id)}
               >
                 +
-              </Button>
+              </button>
             </div>
           </div>
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
       <Handle position={Position.Bottom} type="source" />
     </div>

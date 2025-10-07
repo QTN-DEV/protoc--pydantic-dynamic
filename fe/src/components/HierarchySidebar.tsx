@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Chip, Button } from "@heroui/react";
 import { Node, Edge } from "@xyflow/react";
 
 import { PydanticAttribute } from "@/types/pydantic";
@@ -97,13 +96,18 @@ const HierarchySidebar: React.FC<HierarchySidebarProps> = ({
             {hierarchyNode.attribute.name || `Attribute ${index + 1}`}
           </button>
           <div className="flex gap-1">
-            <Chip color={colorScheme.chip as any} size="sm" variant="flat">
+            <span className={`px-2 py-0.5 text-xs rounded-md ${
+              colorScheme.chip === 'success' ? 'bg-green-100 text-green-700' :
+              colorScheme.chip === 'secondary' ? 'bg-gray-100 text-gray-700' :
+              colorScheme.chip === 'primary' ? 'bg-blue-100 text-blue-700' :
+              'bg-purple-100 text-purple-700'
+            }`}>
               {hierarchyNode.attribute.type}
-            </Chip>
+            </span>
             {hierarchyNode.attribute.nullable && (
-              <Chip color="warning" size="sm" variant="flat">
+              <span className="px-2 py-0.5 text-xs rounded-md bg-yellow-100 text-yellow-700">
                 Nullable
-              </Chip>
+              </span>
             )}
           </div>
         </div>
@@ -134,17 +138,14 @@ const HierarchySidebar: React.FC<HierarchySidebarProps> = ({
           {/* Minimize Button */}
           {!isMinimized && (
             <div className="absolute top-2 right-2">
-              <Button
-                isIconOnly
-                className="min-w-6 w-6 h-6"
-                size="sm"
-                variant="light"
-                onPress={() => {
+              <button
+                className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 transition-colors"
+                onClick={() => {
                   setIsMinimized(true);
                 }}
               >
                 ←
-              </Button>
+              </button>
             </div>
           )}
 

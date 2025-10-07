@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Button, Card, CardBody } from "@heroui/react";
 
 import { apiService } from "@/services/api";
 import { VersionHistory } from "@/types/graph";
@@ -74,11 +73,11 @@ const VersionHistoryList: React.FC<VersionHistoryListProps> = ({
   return (
     <div className="space-y-3">
       {versions.map((version) => (
-        <Card
+        <div
           key={version.version}
-          className={`border ${version.is_active ? "border-green-500 bg-green-50" : "border-gray-200"}`}
+          className={`border rounded-lg ${version.is_active ? "border-green-500 bg-green-50" : "border-gray-200"}`}
         >
-          <CardBody className="p-4">
+          <div className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2">
@@ -102,36 +101,31 @@ const VersionHistoryList: React.FC<VersionHistoryListProps> = ({
               </div>
               <div className="flex flex-col gap-2">
                 <div className="flex gap-2">
-                  <Button
-                    color="primary"
-                    size="sm"
-                    onPress={() => onRestore(version.version)}
+                  <button
+                    className="px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                    onClick={() => onRestore(version.version)}
                   >
                     Restore
-                  </Button>
+                  </button>
                   {!version.is_active && (
-                    <Button
-                      color="success"
-                      size="sm"
-                      variant="flat"
-                      onPress={() => handleSetActive(version.version)}
+                    <button
+                      className="px-3 py-1 text-sm rounded-md bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                      onClick={() => handleSetActive(version.version)}
                     >
                       Set Active
-                    </Button>
+                    </button>
                   )}
                 </div>
-                <Button
-                  color="danger"
-                  size="sm"
-                  variant="flat"
-                  onPress={() => handleDelete(version.version)}
+                <button
+                  className="px-3 py-1 text-sm rounded-md bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                  onClick={() => handleDelete(version.version)}
                 >
                   Delete
-                </Button>
+                </button>
               </div>
             </div>
-          </CardBody>
-        </Card>
+          </div>
+        </div>
       ))}
     </div>
   );

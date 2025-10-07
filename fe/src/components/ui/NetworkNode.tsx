@@ -1,6 +1,5 @@
 import React from "react";
 import { Handle, Position } from "@xyflow/react";
-import { Button, Card, CardBody, Input } from "@heroui/react";
 
 import { NetworkNodeData } from "@/types/node";
 
@@ -33,46 +32,35 @@ const NetworkNode: React.FC<NetworkNodeProps> = ({ data }) => {
         type="source"
       />
 
-      <Card className="w-48 h-24">
-        <CardBody className="p-2 h-full relative">
+      <div className="w-48 h-24 bg-white rounded-lg shadow-lg border border-gray-200">
+        <div className="p-2 h-full relative">
           {/* Edit button in top-right corner (left of delete) */}
-          <Button
-            isIconOnly
-            className="absolute top-0 right-5 min-w-5 w-5 h-5 text-xs z-10"
-            color="primary"
-            size="sm"
-            variant="light"
-            onPress={data.onEdit}
+          <button
+            className="absolute top-0 right-5 min-w-5 w-5 h-5 text-xs z-10 text-blue-600 hover:text-blue-700 transition-colors"
+            onClick={data.onEdit}
           >
             ✎
-          </Button>
+          </button>
 
           {/* Delete button in top-right corner */}
-          <Button
-            isIconOnly
-            className="absolute top-0 right-0 min-w-5 w-5 h-5 text-xs z-10"
-            color="danger"
-            size="sm"
-            variant="light"
-            onPress={data.onDelete}
+          <button
+            className="absolute top-0 right-0 min-w-5 w-5 h-5 text-xs z-10 text-red-600 hover:text-red-700 transition-colors"
+            onClick={data.onDelete}
           >
             ×
-          </Button>
+          </button>
 
           {/* Node name input centered */}
           <div className="flex items-center justify-center h-full pt-2">
-            <Input
-              classNames={{
-                input: "text-center text-xs",
-              }}
+            <input
+              className="w-full px-2 py-1 text-center text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Node name"
-              size="sm"
               value={data.node.name}
               onChange={(e) => data.onNameChange(e.target.value)}
             />
           </div>
-        </CardBody>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

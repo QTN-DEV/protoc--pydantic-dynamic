@@ -1,12 +1,4 @@
 import React from "react";
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
-} from "@heroui/react";
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -14,23 +6,23 @@ interface HelpModalProps {
 }
 
 const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onOpenChange }) => {
+  if (!isOpen) return null;
+
   return (
-    <Modal
-      isOpen={isOpen}
-      scrollBehavior="inside"
-      size="2xl"
-      onOpenChange={onOpenChange}
-    >
-      <ModalContent>
-        {(onClose) => (
-          <>
-            <ModalHeader className="flex flex-col gap-1">
-              <h2 className="text-2xl font-bold">Welcome to PCDNGE!</h2>
-              <p className="text-sm text-gray-600">
-                Pydantic Class Definition Network Graph Editor
-              </p>
-            </ModalHeader>
-            <ModalBody className="max-h-[60vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="px-6 py-4 border-b border-gray-200">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-2xl font-bold">Welcome to PCDNGE!</h2>
+            <p className="text-sm text-gray-600">
+              Pydantic Class Definition Network Graph Editor
+            </p>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-4 overflow-y-auto flex-1">
               <div className="space-y-4">
                 <section>
                   <h3 className="text-lg font-semibold mb-2">
@@ -138,16 +130,19 @@ const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onOpenChange }) => {
                   </p>
                 </div>
               </div>
-            </ModalBody>
-            <ModalFooter>
-              <Button color="primary" onPress={onClose}>
-                Got it!
-              </Button>
-            </ModalFooter>
-          </>
-        )}
-      </ModalContent>
-    </Modal>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+          <button
+            className="px-4 py-2 rounded-lg font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700"
+            onClick={() => onOpenChange(false)}
+          >
+            Got it!
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 

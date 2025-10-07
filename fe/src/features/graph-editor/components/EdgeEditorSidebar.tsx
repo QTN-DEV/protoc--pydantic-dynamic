@@ -1,6 +1,5 @@
 import React from "react";
 import { Edge, Node } from "@xyflow/react";
-import { Button } from "@heroui/react";
 
 import { NetworkNodeData } from "@/types/node";
 import { getEdgeType } from "@/utils/edge";
@@ -29,9 +28,12 @@ const EdgeEditorSidebar: React.FC<EdgeEditorSidebarProps> = ({
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-lg">Edge Editor</h3>
-          <Button isIconOnly size="sm" variant="light" onPress={onClose}>
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 transition-colors text-xl"
+            onClick={onClose}
+          >
             ×
-          </Button>
+          </button>
         </div>
 
         <div className="text-sm text-gray-600">
@@ -43,20 +45,26 @@ const EdgeEditorSidebar: React.FC<EdgeEditorSidebarProps> = ({
         </div>
 
         <div className="flex flex-col gap-2">
-          <Button
-            color={edgeType === "two-way" ? "success" : "primary"}
-            variant="flat"
-            onPress={onToggleType}
+          <button
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              edgeType === "two-way"
+                ? "bg-green-100 text-green-700 hover:bg-green-200"
+                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+            }`}
+            onClick={onToggleType}
           >
             {edgeType === "one-way"
               ? "Make Two-Way (↔)"
               : "Make One-Way (→)"}
-          </Button>
+          </button>
         </div>
 
-        <Button color="primary" variant="flat" onPress={onReverse}>
+        <button
+          className="px-4 py-2 rounded-lg font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+          onClick={onReverse}
+        >
           Reverse Connection
-        </Button>
+        </button>
       </div>
     </div>
   );

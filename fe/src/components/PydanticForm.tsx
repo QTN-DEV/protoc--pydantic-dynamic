@@ -1,15 +1,4 @@
 import React, { useState } from "react";
-import {
-  Card,
-  CardBody,
-  Input,
-  Button,
-  Select,
-  SelectItem,
-  Checkbox,
-  Divider,
-  Chip,
-} from "@heroui/react";
 import Swal from "sweetalert2";
 
 import {
@@ -208,10 +197,8 @@ const PydanticForm: React.FC<PydanticFormProps> = ({ onSubmit }) => {
           attributes[parentIndex].nestedAttributes &&
           attributes[parentIndex].nestedAttributes!.length > 1) ||
           (!isNested && attributes.length > 1)) && (
-          <Button
-            color="danger"
-            size="sm"
-            variant="light"
+          <button
+            className="px-3 py-1 text-sm rounded-lg font-medium transition-colors text-red-600 hover:text-red-700"
             onClick={() =>
               isNested && parentIndex !== undefined
                 ? removeNestedAttribute(parentIndex, index)
@@ -219,106 +206,123 @@ const PydanticForm: React.FC<PydanticFormProps> = ({ onSubmit }) => {
             }
           >
             ×
-          </Button>
+          </button>
         )}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
-        <Input
-          required
-          label="Name"
-          placeholder="name"
-          size="sm"
-          value={attr.name}
-          onChange={(e) =>
-            isNested && parentIndex !== undefined
-              ? updateNestedAttribute(
-                  parentIndex,
-                  index,
-                  "name",
-                  e.target.value,
-                )
-              : updateAttribute(index, "name", e.target.value)
-          }
-        />
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">
+            Name<span className="text-red-500">*</span>
+          </label>
+          <input
+            required
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="name"
+            value={attr.name}
+            onChange={(e) =>
+              isNested && parentIndex !== undefined
+                ? updateNestedAttribute(
+                    parentIndex,
+                    index,
+                    "name",
+                    e.target.value,
+                  )
+                : updateAttribute(index, "name", e.target.value)
+            }
+          />
+        </div>
 
-        <Select
-          label="Type"
-          placeholder="Select type"
-          selectedKeys={[attr.type]}
-          size="sm"
-          onSelectionChange={(keys) => {
-            const selectedType = Array.from(keys)[0] as AttributeType;
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">
+            Type
+          </label>
+          <select
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            value={attr.type}
+            onChange={(e) => {
+              const selectedType = e.target.value as AttributeType;
 
-            isNested && parentIndex !== undefined
-              ? updateNestedAttribute(parentIndex, index, "type", selectedType)
-              : updateAttribute(index, "type", selectedType);
-          }}
-        >
-          <SelectItem key={AttributeType.STRING}>String</SelectItem>
-          <SelectItem key={AttributeType.INT}>Integer</SelectItem>
-          <SelectItem key={AttributeType.LIST_STRING}>
-            List of String
-          </SelectItem>
-          {!isNested ? (
-            <SelectItem key={AttributeType.NESTED}>Nested</SelectItem>
-          ) : null}
-          {!isNested ? (
-            <SelectItem key={AttributeType.LIST_NESTED}>
-              List of Nested
-            </SelectItem>
-          ) : null}
-        </Select>
+              isNested && parentIndex !== undefined
+                ? updateNestedAttribute(parentIndex, index, "type", selectedType)
+                : updateAttribute(index, "type", selectedType);
+            }}
+          >
+            <option value={AttributeType.STRING}>String</option>
+            <option value={AttributeType.INT}>Integer</option>
+            <option value={AttributeType.LIST_STRING}>
+              List of String
+            </option>
+            {!isNested && (
+              <option value={AttributeType.NESTED}>Nested</option>
+            )}
+            {!isNested && (
+              <option value={AttributeType.LIST_NESTED}>
+                List of Nested
+              </option>
+            )}
+          </select>
+        </div>
 
-        <Input
-          label="Default"
-          placeholder="Optional"
-          size="sm"
-          value={attr.defaultValue?.toString() || ""}
-          onChange={(e) =>
-            isNested && parentIndex !== undefined
-              ? updateNestedAttribute(
-                  parentIndex,
-                  index,
-                  "defaultValue",
-                  e.target.value,
-                )
-              : updateAttribute(index, "defaultValue", e.target.value)
-          }
-        />
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">
+            Default
+          </label>
+          <input
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="Optional"
+            value={attr.defaultValue?.toString() || ""}
+            onChange={(e) =>
+              isNested && parentIndex !== undefined
+                ? updateNestedAttribute(
+                    parentIndex,
+                    index,
+                    "defaultValue",
+                    e.target.value,
+                  )
+                : updateAttribute(index, "defaultValue", e.target.value)
+            }
+          />
+        </div>
 
         <div className="flex items-center justify-center">
-          <Checkbox
-            isSelected={attr.nullable}
-            size="sm"
-            onValueChange={(checked) =>
-              isNested && parentIndex !== undefined
-                ? updateNestedAttribute(parentIndex, index, "nullable", checked)
-                : updateAttribute(index, "nullable", checked)
-            }
-          >
-            Nullable
-          </Checkbox>
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              checked={attr.nullable}
+              onChange={(e) =>
+                isNested && parentIndex !== undefined
+                  ? updateNestedAttribute(parentIndex, index, "nullable", e.target.checked)
+                  : updateAttribute(index, "nullable", e.target.checked)
+              }
+            />
+            <span className="ml-2 text-sm text-gray-700">Nullable</span>
+          </label>
         </div>
       </div>
 
-      <Input
-        required
-        label="Description"
-        placeholder="Describe this attribute"
-        size="sm"
-        value={attr.description}
-        onChange={(e) =>
-          isNested && parentIndex !== undefined
-            ? updateNestedAttribute(
-                parentIndex,
-                index,
-                "description",
-                e.target.value,
-              )
-            : updateAttribute(index, "description", e.target.value)
-        }
-      />
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700">
+          Description<span className="text-red-500">*</span>
+        </label>
+        <input
+          required
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="Describe this attribute"
+          value={attr.description}
+          onChange={(e) =>
+            isNested && parentIndex !== undefined
+              ? updateNestedAttribute(
+                  parentIndex,
+                  index,
+                  "description",
+                  e.target.value,
+                )
+              : updateAttribute(index, "description", e.target.value)
+          }
+        />
+      </div>
 
       {!isNested &&
         (attr.type === AttributeType.NESTED ||
@@ -328,14 +332,12 @@ const PydanticForm: React.FC<PydanticFormProps> = ({ onSubmit }) => {
               <span className="text-sm font-medium text-gray-600">
                 Nested Attributes
               </span>
-              <Button
-                color="primary"
-                size="sm"
-                variant="light"
+              <button
+                className="px-3 py-1 text-sm rounded-lg font-medium transition-colors text-blue-600 hover:text-blue-700"
                 onClick={() => addNestedAttribute(index)}
               >
                 + Add
-              </Button>
+              </button>
             </div>
             <div className="ml-4 border-l-2 border-blue-200 pl-3">
               {attr.nestedAttributes?.map((nestedAttr, nestedIndex) =>
@@ -349,39 +351,47 @@ const PydanticForm: React.FC<PydanticFormProps> = ({ onSubmit }) => {
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <Card>
-        <CardBody>
+      <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+        <div className="p-6">
           <form className="space-y-4" onSubmit={handleSubmit}>
             {/* Class Definition Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                required
-                label="Class Name"
-                placeholder="e.g., User, Product, Order"
-                value={className}
-                onChange={(e) => setClassName(e.target.value)}
-              />
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Class Name<span className="text-red-500">*</span>
+                </label>
+                <input
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., User, Product, Order"
+                  value={className}
+                  onChange={(e) => setClassName(e.target.value)}
+                />
+              </div>
 
-              <Input
-                label="Class Description (optional)"
-                placeholder="Brief description of this class"
-                value={classDescription}
-                onChange={(e) => setClassDescription(e.target.value)}
-              />
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Class Description (optional)
+                </label>
+                <input
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Brief description of this class"
+                  value={classDescription}
+                  onChange={(e) => setClassDescription(e.target.value)}
+                />
+              </div>
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-lg font-semibold">Attributes</h3>
-                <Button
-                  color="primary"
-                  size="sm"
+                <button
+                  className="px-3 py-1 text-sm rounded-lg font-medium transition-colors text-blue-600 hover:text-blue-700"
                   type="button"
-                  variant="light"
                   onClick={addAttribute}
                 >
                   + Add Attribute
-                </Button>
+                </button>
               </div>
 
               <div className="space-y-2">
@@ -392,26 +402,26 @@ const PydanticForm: React.FC<PydanticFormProps> = ({ onSubmit }) => {
 
           {result && (
             <div className="mt-8">
-              <Divider className="mb-6" />
+              <hr className="mb-6 border-gray-200" />
               <h2 className="text-xl font-semibold mb-4">Generated Result</h2>
               <div className="space-y-4">
                 <div>
-                  <Chip color="primary" variant="flat">
+                  <span className="inline-block px-3 py-1 text-sm font-medium rounded-md bg-blue-100 text-blue-700">
                     Generated Class: {result.generatedClass}
-                  </Chip>
+                  </span>
                 </div>
-                <Card>
-                  <CardBody>
+                <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+                  <div className="p-4">
                     <pre className="whitespace-pre-wrap text-sm">
                       {JSON.stringify(result.result, null, 2)}
                     </pre>
-                  </CardBody>
-                </Card>
+                  </div>
+                </div>
               </div>
             </div>
           )}
-        </CardBody>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

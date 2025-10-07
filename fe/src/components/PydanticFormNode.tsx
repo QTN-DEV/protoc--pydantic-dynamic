@@ -1,6 +1,5 @@
 import React from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
-import { Card, CardBody } from "@heroui/react";
 
 import PydanticForm from "./PydanticForm";
 
@@ -22,16 +21,16 @@ const PydanticFormNode: React.FC<NodeProps> = ({ data }) => {
     <div className="min-w-[800px]">
       <Handle position={Position.Top} type="target" />
 
-      <Card className="shadow-lg">
-        <CardBody className="p-0">
+      <div className="bg-white rounded-lg shadow-lg">
+        <div className="p-0">
           <PydanticForm
             isLoading={nodeData.isLoading}
             prompt={nodeData.prompt}
             onPromptChange={nodeData.onPromptChange}
             onSubmit={nodeData.onSubmit}
           />
-        </CardBody>
-      </Card>
+        </div>
+      </div>
 
       <Handle position={Position.Bottom} type="source" />
     </div>

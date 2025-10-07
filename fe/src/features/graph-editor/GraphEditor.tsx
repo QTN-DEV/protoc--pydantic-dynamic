@@ -13,17 +13,6 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import {
-  Button,
-  Card,
-  CardBody,
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-} from "@heroui/react";
 import { useNavigate } from "react-router-dom";
 import { v7 as uuidv7 } from "uuid";
 
@@ -72,21 +61,9 @@ const GraphEditorInner: React.FC<GraphEditorInnerProps> = ({
   const [systemPrompt, setSystemPrompt] = useState(graph.system_prompt || "");
   const [generationResponse, setGenerationResponse] = useState<any>(null);
 
-  const {
-    isOpen: isHelpOpen,
-    onOpen: onHelpOpen,
-    onOpenChange: onHelpOpenChange,
-  } = useDisclosure();
-  const {
-    isOpen: isVersionHistoryOpen,
-    onOpen: onVersionHistoryOpen,
-    onOpenChange: onVersionHistoryOpenChange,
-  } = useDisclosure();
-  const {
-    isOpen: isAIGeneratorOpen,
-    onOpen: onAIGeneratorOpen,
-    onOpenChange: onAIGeneratorOpenChange,
-  } = useDisclosure();
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
+  const [isAIGeneratorOpen, setIsAIGeneratorOpen] = useState(false);
 
   const { getViewport } = useReactFlow();
   const navigate = useNavigate();
@@ -113,9 +90,9 @@ const GraphEditorInner: React.FC<GraphEditorInnerProps> = ({
 
       setNodes(nodesWithCallbacks);
       setEdges(restoredEdges);
-      onVersionHistoryOpenChange();
+      setIsVersionHistoryOpen(false);
     },
-    [setNodes, setEdges, onVersionHistoryOpenChange],
+    [setNodes, setEdges],
   );
 
   const {
@@ -360,10 +337,10 @@ const GraphEditorInner: React.FC<GraphEditorInnerProps> = ({
     const hasVisited = localStorage.getItem(STORAGE_KEYS.HAS_VISITED);
 
     if (!hasVisited) {
-      onHelpOpen();
+      setIsHelpOpen(true);
       localStorage.setItem(STORAGE_KEYS.HAS_VISITED, "true");
     }
-  }, [onHelpOpen]);
+  }, []);
 
   // Load graph state on mount
   useEffect(() => {
@@ -435,54 +412,47 @@ const GraphEditorInner: React.FC<GraphEditorInnerProps> = ({
 
         {/* Latest Version Display */}
         {latestVersion !== null && (
-          <Card
-            isPressable
-            className="cursor-pointer hover:bg-gray-50 transition-colors"
-            onPress={onVersionHistoryOpen}
+          <div
+            className="cursor-pointer hover:bg-gray-50 transition-colors bg-white rounded-lg shadow-lg border border-gray-200"
+            onClick={() => setIsVersionHistoryOpen(true)}
           >
-            <CardBody className="px-4 py-2">
+            <div className="px-4 py-2">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">Latest Version:</span>
                 <span className="text-sm font-semibold text-blue-600">
                   v{latestVersion}
                 </span>
               </div>
-            </CardBody>
-          </Card>
+            </div>
+          </div>
         )}
       </div>
 
       {/* Floating Add Node Button */}
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20">
-        <Button
-          isIconOnly
-          className="shadow-lg"
-          color="primary"
-          size="lg"
-          onPress={addNodeAtViewportCenter}
+        <button
+          className="w-12 h-12 rounded-lg font-medium transition-colors shadow-lg bg-blue-600 text-white hover:bg-blue-700 text-2xl"
+          onClick={addNodeAtViewportCenter}
         >
           +
-        </Button>
+        </button>
       </div>
 
       {/* AI Generator and Publish Buttons */}
       <div className="absolute top-4 right-4 z-20 flex gap-2">
-        <Button
-          isIconOnly
-          className="shadow-lg bg-purple-500 text-white h-10 w-10"
-          onPress={onAIGeneratorOpen}
+        <button
+          className="w-10 h-10 rounded-lg font-medium transition-colors shadow-lg bg-purple-500 text-white hover:bg-purple-600"
+          onClick={() => setIsAIGeneratorOpen(true)}
         >
           ✨
-        </Button>
-        <Button
-          className="shadow-lg text-white px-8"
-          color="success"
-          isDisabled={isPublishing}
-          isLoading={isPublishing}
-          onPress={handlePublish}
+        </button>
+        <button
+          className="px-8 py-2 rounded-lg font-medium transition-colors shadow-lg text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isPublishing}
+          onClick={handlePublish}
         >
-          Publish
-        </Button>
+          {isPublishing ? "Publishing..." : "Publish"}
+        </button>
       </div>
 
       {/* Edge Editor Sidebar */}
@@ -519,14 +489,12 @@ const GraphEditorInner: React.FC<GraphEditorInnerProps> = ({
 
       {/* Help Button */}
       <div className="absolute bottom-4 right-4 z-20">
-        <Button
-          isIconOnly
-          className="shadow-lg bg-blue-500 text-white"
-          size="lg"
-          onPress={onHelpOpen}
+        <button
+          className="w-12 h-12 rounded-lg font-medium transition-colors shadow-lg bg-blue-500 text-white hover:bg-blue-600 text-2xl"
+          onClick={() => setIsHelpOpen(true)}
         >
           ?
-        </Button>
+        </button>
       </div>
 
       {/* AI Generator Modal */}
@@ -544,9 +512,9 @@ const GraphEditorInner: React.FC<GraphEditorInnerProps> = ({
           );
 
           setGenerationResponse(result);
-          onAIGeneratorOpenChange();
+          setIsAIGeneratorOpen(false);
         }}
-        onOpenChange={onAIGeneratorOpenChange}
+        onOpenChange={setIsAIGeneratorOpen}
         onSystemPromptChange={setSystemPrompt}
       />
 
@@ -559,43 +527,46 @@ const GraphEditorInner: React.FC<GraphEditorInnerProps> = ({
       )}
 
       {/* Version History Modal */}
-      <Modal
-        isOpen={isVersionHistoryOpen}
-        scrollBehavior="inside"
-        size="xl"
-        onOpenChange={onVersionHistoryOpenChange}
-      >
-        <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalHeader>Version History</ModalHeader>
-              <ModalBody>
-                <VersionHistoryList
-                  graphId={graph.graph_id}
-                  onDelete={handleDeleteVersion}
-                  onRestore={(version) =>
-                    handleRestoreVersion(
-                      version,
-                      updateNodeName,
-                      handleEditNode,
-                      deleteNode,
-                    )
-                  }
-                  onSetActive={handleSetActiveVersion}
-                />
-              </ModalBody>
-              <ModalFooter>
-                <Button color="primary" onPress={onClose}>
-                  Close
-                </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
-      </Modal>
+      {isVersionHistoryOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-xl max-w-xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold">Version History</h2>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-4 overflow-y-auto flex-1">
+              <VersionHistoryList
+                graphId={graph.graph_id}
+                onDelete={handleDeleteVersion}
+                onRestore={(version) =>
+                  handleRestoreVersion(
+                    version,
+                    updateNodeName,
+                    handleEditNode,
+                    deleteNode,
+                  )
+                }
+                onSetActive={handleSetActiveVersion}
+              />
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+              <button
+                className="px-4 py-2 rounded-lg font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700"
+                onClick={() => setIsVersionHistoryOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Help Modal */}
-      <HelpModal isOpen={isHelpOpen} onOpenChange={onHelpOpenChange} />
+      <HelpModal isOpen={isHelpOpen} onOpenChange={setIsHelpOpen} />
     </div>
   );
 };
