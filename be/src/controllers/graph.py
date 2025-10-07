@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -14,11 +14,11 @@ router = APIRouter()
 
 
 class GraphStateRequest(BaseModel):
-    name: str | None = None
+    name: Optional[str] = None
     nodes: list[dict[str, Any]]
     edges: list[dict[str, Any]]
-    viewport: dict[str, Any] | None = None
-    system_prompt: str | None = None
+    viewport: Optional[dict[str, Any]] = None
+    system_prompt: Optional[str] = None
 
 
 class GraphStateResponse(BaseModel):
@@ -26,7 +26,7 @@ class GraphStateResponse(BaseModel):
     name: str
     nodes: list[dict[str, Any]]
     edges: list[dict[str, Any]]
-    viewport: dict[str, Any] | None
+    viewport: Optional[dict[str, Any]]
     system_prompt: str
     updated_at: datetime
 
@@ -41,8 +41,8 @@ class PublishResponse(BaseModel):
 
 
 class LatestVersionResponse(BaseModel):
-    version: int | None
-    published_at: datetime | None
+    version: Optional[int]
+    published_at: Optional[datetime]
 
 
 class VersionHistoryItem(BaseModel):
@@ -405,16 +405,33 @@ async def generate_from_graph(
         raise HTTPException(status_code=404, detail="Graph not found")
 
     # Get the Pydantic class from the graph
+    pydantic_class = None
+    pydantic_schema = None
+
     try:
         pydantic_class = await graph.get_pydantic_class()
+        pydantic_schema = pydantic_class.model_json_schema()
     except Exception as e:
+        # Save failed snapshot (schema generation failed)
+        snapshot = GenerationGraphSnapshot(
+            graph_id=graph.graph_id,
+            name=graph.name,
+            nodes=graph.nodes,
+            edges=graph.edges,
+            viewport=graph.viewport,
+            system_prompt=graph.system_prompt,
+            user_prompt=request.prompt,
+            pydantic_model_schema={},
+            generation_result=None,
+            error_message=f"Failed to generate Pydantic class: {e!s}",
+            success=False,
+        )
+        await snapshot.insert()
+
         raise HTTPException(
             status_code=400,
             detail=f"Failed to generate Pydantic class from graph: {e!s}",
         ) from e
-
-    # Get the schema
-    pydantic_schema = pydantic_class.model_json_schema()
 
     # Generate using OpenAI
     try:
@@ -427,7 +444,7 @@ async def generate_from_graph(
         # Convert result to dict
         result_dict = result.model_dump()
 
-        # Save generation snapshot
+        # Save successful generation snapshot
         snapshot = GenerationGraphSnapshot(
             graph_id=graph.graph_id,
             name=graph.name,
@@ -438,11 +455,29 @@ async def generate_from_graph(
             user_prompt=request.prompt,
             pydantic_model_schema=pydantic_schema,
             generation_result=result_dict,
+            error_message=None,
+            success=True,
         )
         await snapshot.insert()
 
         return GenerateResponse(result=result_dict)
     except Exception as e:
+        # Save failed snapshot (generation failed)
+        snapshot = GenerationGraphSnapshot(
+            graph_id=graph.graph_id,
+            name=graph.name,
+            nodes=graph.nodes,
+            edges=graph.edges,
+            viewport=graph.viewport,
+            system_prompt=graph.system_prompt,
+            user_prompt=request.prompt,
+            pydantic_model_schema=pydantic_schema,
+            generation_result=None,
+            error_message=f"Failed to generate data: {e!s}",
+            success=False,
+        )
+        await snapshot.insert()
+
         raise HTTPException(
             status_code=500,
             detail=f"Failed to generate data: {e!s}",

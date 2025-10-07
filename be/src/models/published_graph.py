@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Optional
 
 from beanie import Document
 from pydantic import BaseModel, Field
@@ -11,7 +11,7 @@ class PublishedGraph(Document):
     name: str = Field(...)
     nodes: list[dict[str, Any]] = Field(default_factory=list)
     edges: list[dict[str, Any]] = Field(default_factory=list)
-    viewport: dict[str, Any] | None = Field(default=None)
+    viewport: Optional[dict[str, Any]] = Field(default=None)
     node_definitions: list[dict[str, Any]] = Field(default_factory=list)
     published_at: datetime = Field(default_factory=datetime.utcnow)
     is_active: bool = Field(default=False)

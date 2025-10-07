@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from typing import Optional
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Request
@@ -77,7 +78,7 @@ def _handle_string_type(attr: PydanticAttribute) -> tuple[type, object]:
     default_value = ...
 
     if attr.nullable:
-        field_type = str | None
+        field_type = Optional[str]
     if attr.default_value is not None:
         default_value = str(attr.default_value)
     elif attr.nullable:
@@ -90,7 +91,7 @@ def _handle_int_type(attr: PydanticAttribute) -> tuple[type, object]:
     default_value = ...
 
     if attr.nullable:
-        field_type = int | None
+        field_type = Optional[int]
     if attr.default_value:
         default_value = int(attr.default_value)
     elif attr.nullable:
@@ -103,7 +104,7 @@ def _handle_float_type(attr: PydanticAttribute) -> tuple[type, object]:
     default_value = ...
 
     if attr.nullable:
-        field_type = float | None
+        field_type = Optional[float]
     if attr.default_value:
         default_value = float(attr.default_value)
     elif attr.nullable:
@@ -116,7 +117,7 @@ def _handle_boolean_type(attr: PydanticAttribute) -> tuple[type, object]:
     default_value = ...
 
     if attr.nullable:
-        field_type = bool | None
+        field_type = Optional[bool]
     if attr.default_value is not None:
         # Handle string representations of boolean
         if isinstance(attr.default_value, str):
@@ -142,12 +143,12 @@ def _handle_nested_type(attr: PydanticAttribute) -> tuple[type, object]:
     )
 
     if attr.nullable:
-        return nested_model | None, None
+        return Optional[nested_model], None
     return nested_model, ...
 
 def _handle_list_string_type(attr: PydanticAttribute) -> tuple[type, object]:
     if attr.nullable:
-        return list[str] | None, None
+        return Optional[list[str]], None
     return list[str], []
 
 def _handle_list_nested_type(attr: PydanticAttribute) -> tuple[type, object]:
@@ -165,7 +166,7 @@ def _handle_list_nested_type(attr: PydanticAttribute) -> tuple[type, object]:
     )
 
     if attr.nullable:
-        return list[nested_model] | None, None
+        return Optional[list[nested_model]], None
     return list[nested_model], []
 
 
@@ -193,7 +194,7 @@ def create_pydantic_model_from_attributes(
         # Sanitize attribute name
         sanitized_attr_name = _sanitize_to_camel_case(attr.name)
         # TODO: no default value for now
-        fields[sanitized_attr_name] = field_type
+        fields[sanitized_attr_name] = field_type, default_value
 
     return create_model(sanitized_class_name, **fields)
 

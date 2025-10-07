@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Optional
 
 from beanie import Document
 from pydantic import BaseModel, Field
@@ -12,7 +12,7 @@ class Graph(Document):
     name: str = Field(default="Untitled Graph")
     nodes: list[dict[str, Any]] = Field(default_factory=list)
     edges: list[dict[str, Any]] = Field(default_factory=list)
-    viewport: dict[str, Any] | None = Field(default=None)
+    viewport: Optional[dict[str, Any]] = Field(default=None)
     system_prompt: str = Field(default="")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -84,6 +84,7 @@ class Graph(Document):
 
         fields = {}
         for node in self.nodes:
+            print("Node label: ", node.get("data", {}).get("node", {}).get("name"))
             node_id = node.get("data", {}).get("node", {}).get("id")
             if not node_id:
                 logger.warning("Node missing 'id' in data: %s", node)

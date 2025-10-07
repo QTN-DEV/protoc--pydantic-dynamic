@@ -39,7 +39,7 @@ const ResponseSidebar: React.FC<ResponseSidebarProps> = ({
     depth: number = 0,
   ): JSX.Element[] => {
     const elements: JSX.Element[] = [];
-    const paddingLeft = depth * 18; // 18px per level
+    const paddingLeft = depth === 0 ? 0 : 18; // 18px per level
     const headingSize = Math.max(1, 4 - depth); // h1 to h4, then h4 for deeper levels
 
     if (typeof data === "object" && data !== null && !Array.isArray(data)) {

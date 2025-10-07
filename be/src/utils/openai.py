@@ -1,4 +1,5 @@
 from typing import (
+    Optional,
     TypeVar,
 )
 
@@ -36,7 +37,7 @@ async def generate(prompt: str, pydantic_model: type[T], system_prompt: str = ""
         messages=messages,
         stream=True,
     )
-    result: pydantic_model | None = None
+    result: Optional[pydantic_model] = None
 
     async for generated in generator:
         result = generated

@@ -14,7 +14,9 @@ class GenerationGraphSnapshot(Document):
     system_prompt: str = Field(default="")
     user_prompt: str = Field(...)
     pydantic_model_schema: dict[str, Any] = Field(...)
-    generation_result: dict[str, Any] = Field(...)
+    generation_result: dict[str, Any] | None = Field(default=None)
+    error_message: str | None = Field(default=None)
+    success: bool = Field(default=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Settings:
@@ -49,5 +51,7 @@ class GenerationGraphSnapshot(Document):
                     "name": "John Doe",
                     "age": 30,
                 },
+                "error_message": None,
+                "success": True,
             },
         }

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -26,7 +26,7 @@ class PydanticAttribute(BaseModel):
 
 class PydanticClassRequest(BaseModel):
     class_name: str = Field(alias="className")
-    class_description: str | None = Field(None, alias="classDescription")
+    class_description: Optional[str] = Field(None, alias="classDescription")
     attributes: list[PydanticAttribute]
     prompt: str
 
