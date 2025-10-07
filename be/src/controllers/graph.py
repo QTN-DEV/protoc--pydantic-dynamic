@@ -5,8 +5,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from src.models.graph import Graph
-from src.models.pydantic_dynamic_class import PydanticDynamicClass
 from src.models.published_graph import PublishedGraph
+from src.models.pydantic_dynamic_class import PydanticDynamicClass
 
 router = APIRouter()
 
@@ -174,7 +174,10 @@ async def publish_graph(graph_id: str) -> PublishResponse:
         name=published_graph.name,
         published_at=published_graph.published_at,
         node_definitions_count=len(node_definitions),
-        message=f"Graph published successfully as version {next_version} with {len(node_definitions)} node definition(s)",
+        message=(
+            f"Graph published successfully as version {next_version} "
+            f"with {len(node_definitions)} node definition(s)"
+        ),
     )
 
 
@@ -215,7 +218,9 @@ async def get_latest_version(graph_id: str) -> LatestVersionResponse:
 
 
 @router.get("/graph/{graph_id}/versions", response_model=list[VersionHistoryItem])
-async def get_version_history(graph_id: str, limit: int = 5) -> list[VersionHistoryItem]:
+async def get_version_history(
+    graph_id: str, limit: int = 5,
+) -> list[VersionHistoryItem]:
     """Get version history for a graph"""
     published_versions = (
         await PublishedGraph.find(PublishedGraph.graph_id == graph_id)
@@ -232,6 +237,29 @@ async def get_version_history(graph_id: str, limit: int = 5) -> list[VersionHist
         )
         for pv in published_versions
     ]
+
+
+@router.delete("/graph/{graph_id}/version/{version}")
+async def delete_version(graph_id: str, version: int) -> dict[str, str | int]:
+    """Delete a specific published version of a graph"""
+    # Find the published version
+    published_version = await PublishedGraph.find_one(
+        PublishedGraph.graph_id == graph_id,
+        PublishedGraph.version == version,
+    )
+
+    if not published_version:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Published version {version} not found for graph {graph_id}",
+        )
+
+    await published_version.delete()
+    return {
+        "message": f"Version {version} deleted successfully",
+        "graph_id": graph_id,
+        "version": version,
+    }
 
 
 @router.post("/graph/{graph_id}/restore/{version}", response_model=GraphStateResponse)

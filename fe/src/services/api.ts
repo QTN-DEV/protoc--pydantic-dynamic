@@ -202,6 +202,27 @@ export const apiService = {
     return await response.json();
   },
 
+  async deleteVersion(
+    graphId: string,
+    version: number,
+  ): Promise<{ message: string; graph_id: string; version: number }> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/graph/${graphId}/version/${version}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to delete version");
+    }
+
+    return await response.json();
+  },
+
   async loadPCD(nodeId: string): Promise<PCDState> {
     const response = await fetch(`${API_BASE_URL}/api/pcd/${nodeId}`, {
       method: "GET",
@@ -225,7 +246,6 @@ export const apiService = {
     graphId: string,
     nodes: Node[],
     edges: Edge[],
-    viewport: { x: number; y: number; zoom: number } | null,
     name?: string,
   ): Promise<PCDState> {
     const response = await fetch(`${API_BASE_URL}/api/pcd/${nodeId}`, {

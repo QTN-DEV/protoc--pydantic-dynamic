@@ -1,4 +1,5 @@
 import React, { createContext, useContext } from "react";
+
 import { PydanticAttribute } from "@/types/pydantic";
 
 interface PydanticFlowContextValue {
@@ -13,9 +14,9 @@ interface PydanticFlowContextValue {
   updateClassDescription: (description: string) => void;
 }
 
-const PydanticFlowContext = createContext<
-  PydanticFlowContextValue | undefined
->(undefined);
+const PydanticFlowContext = createContext<PydanticFlowContextValue | undefined>(
+  undefined,
+);
 
 export const PydanticFlowProvider: React.FC<{
   children: React.ReactNode;
@@ -32,9 +33,7 @@ export const usePydanticFlow = () => {
   const context = useContext(PydanticFlowContext);
 
   if (!context) {
-    throw new Error(
-      "usePydanticFlow must be used within PydanticFlowProvider",
-    );
+    throw new Error("usePydanticFlow must be used within PydanticFlowProvider");
   }
 
   return context;

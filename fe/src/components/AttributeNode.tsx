@@ -112,8 +112,8 @@ const AttributeNode: React.FC<NodeProps> = ({ data, id }) => {
             <Textarea
               required
               label="Description"
-              minRows={2}
               maxRows={5}
+              minRows={2}
               placeholder="Describe this attribute"
               size="sm"
               value={attribute.description}

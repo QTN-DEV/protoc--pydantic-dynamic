@@ -3,6 +3,7 @@ import {
   ReactFlow,
   Background,
   Controls,
+  MiniMap,
   Node,
   Edge,
   useNodesState,
@@ -455,14 +456,7 @@ const PydanticFlowCanvasInner: React.FC<PydanticFlowCanvasInnerProps> = ({
     // Set new timeout for auto-save (1 second debounce)
     autoSaveTimeoutRef.current = setTimeout(() => {
       apiService
-        .savePCD(
-          nodeId,
-          graphId,
-          nodes,
-          edges,
-          null, // No viewport - positions calculated on load
-          className || "Untitled PCD",
-        )
+        .savePCD(nodeId, graphId, nodes, edges, className || "Untitled PCD")
         .catch((error) => {
           console.error("Auto-save failed:", error);
         });
@@ -707,6 +701,7 @@ const PydanticFlowCanvasInner: React.FC<PydanticFlowCanvasInnerProps> = ({
       >
         <Background />
         <Controls />
+        <MiniMap />
       </ReactFlow>
     </div>
   );

@@ -127,30 +127,42 @@ const nodeTypes = {
 interface VersionHistoryListProps {
   graphId: string;
   onRestore: (version: number) => void;
+  onDelete: (version: number) => Promise<void>;
 }
 
 const VersionHistoryList: React.FC<VersionHistoryListProps> = ({
   graphId,
   onRestore,
+  onDelete,
 }) => {
   const [versions, setVersions] = useState<VersionHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const loadVersions = async () => {
-      try {
-        const versionHistory = await apiService.getVersionHistory(graphId, 5);
+  const loadVersions = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const versionHistory = await apiService.getVersionHistory(graphId, 5);
 
-        setVersions(versionHistory);
-      } catch (error) {
-        console.error("Failed to load version history:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadVersions();
+      setVersions(versionHistory);
+    } catch (error) {
+      console.error("Failed to load version history:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, [graphId]);
+
+  useEffect(() => {
+    loadVersions();
+  }, [loadVersions]);
+
+  const handleDelete = useCallback(
+    async (version: number) => {
+      await onDelete(version);
+      // Reload versions after deletion
+      await loadVersions();
+    },
+    [onDelete, loadVersions],
+  );
 
   if (isLoading) {
     return <div className="text-center py-4">Loading versions...</div>;
@@ -170,7 +182,7 @@ const VersionHistoryList: React.FC<VersionHistoryListProps> = ({
         <Card key={version.version} className="border border-gray-200">
           <CardBody className="p-4">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="flex-1">
                 <h3 className="text-lg font-semibold text-gray-800">
                   Version {version.version}
                 </h3>
@@ -183,13 +195,23 @@ const VersionHistoryList: React.FC<VersionHistoryListProps> = ({
                   })}
                 </p>
               </div>
-              <Button
-                color="primary"
-                size="sm"
-                onPress={() => onRestore(version.version)}
-              >
-                Restore
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  color="primary"
+                  size="sm"
+                  onPress={() => onRestore(version.version)}
+                >
+                  Restore
+                </Button>
+                <Button
+                  color="danger"
+                  size="sm"
+                  variant="flat"
+                  onPress={() => handleDelete(version.version)}
+                >
+                  Delete
+                </Button>
+              </div>
             </div>
           </CardBody>
         </Card>
@@ -208,12 +230,7 @@ const EDGE_COLORS = {
 
 interface PCDNetworkGraphEditorInnerProps {
   graph: GraphState;
-  onSave: (
-    nodes: Node[],
-    edges: Edge[],
-    viewport: { x: number; y: number; zoom: number },
-    name?: string,
-  ) => Promise<void>;
+  onSave: (nodes: Node[], edges: Edge[], name?: string) => Promise<void>;
 }
 
 const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
@@ -243,22 +260,20 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
     onOpen: onVersionHistoryOpen,
     onOpenChange: onVersionHistoryOpenChange,
   } = useDisclosure();
-  const { getViewport, setViewport } = useReactFlow();
+  const { getViewport } = useReactFlow();
   const nameInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
   const handleEditNode = useCallback(
     async (nodeId: string) => {
       try {
-        const viewport = getViewport();
-
-        await onSave(nodes, edges, viewport);
+        await onSave(nodes, edges);
         navigate(`/${graph.graph_id}/${nodeId}`);
       } catch (error) {
         console.error("Failed to save graph before editing:", error);
       }
     },
-    [graph, nodes, edges, getViewport, navigate, onSave],
+    [graph, nodes, edges, navigate, onSave],
   );
 
   const addNodeAtViewportCenter = useCallback(() => {
@@ -393,13 +408,13 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
           newEdge = {
             ...params,
             id: edgeId,
-            animated: true,
             markerEnd: {
               type: MarkerType.ArrowClosed,
               width: 20,
               height: 20,
               color: EDGE_COLORS.ONE_WAY,
             },
+            animated: true,
             style: {
               stroke: EDGE_COLORS.ONE_WAY,
               strokeWidth: 2,
@@ -645,15 +660,14 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
 
     try {
       setGraphName(tempGraphName);
-      const viewport = getViewport();
 
-      await onSave(nodes, edges, viewport, tempGraphName);
+      await onSave(nodes, edges, tempGraphName);
       setIsEditingName(false);
     } catch (error) {
       console.error("Failed to save graph name:", error);
       setIsEditingName(false);
     }
-  }, [tempGraphName, graph.graph_id, nodes, edges, getViewport, onSave]);
+  }, [tempGraphName, graph.graph_id, nodes, edges, onSave]);
 
   // Handle canceling name edit
   const handleCancelNameEdit = useCallback(() => {
@@ -695,11 +709,6 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
         setNodes(restoredNodes);
         setEdges(graphState.edges);
 
-        // Restore viewport if available
-        if (graphState.viewport) {
-          setViewport(graphState.viewport, { duration: 300 });
-        }
-
         // Close the modal
         onVersionHistoryOpenChange();
 
@@ -724,11 +733,60 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
       onVersionHistoryOpenChange,
       setNodes,
       setEdges,
-      setViewport,
       updateNodeName,
       handleEditNode,
       deleteNode,
     ],
+  );
+
+  // Handle deleting a version
+  const handleDeleteVersion = useCallback(
+    async (version: number) => {
+      try {
+        const result = await Swal.fire({
+          icon: "warning",
+          title: "Delete Version?",
+          text: `Are you sure you want to delete version ${version}? This action cannot be undone.`,
+          showCancelButton: true,
+          confirmButtonText: "Yes, delete it",
+          cancelButtonText: "Cancel",
+          confirmButtonColor: "#d33",
+        });
+
+        if (!result.isConfirmed) return;
+
+        await apiService.deleteVersion(graph.graph_id, version);
+
+        // Reload version history to reflect the deletion
+        const versionHistory = await apiService.getVersionHistory(
+          graph.graph_id,
+          5,
+        );
+
+        // Update latest version if we deleted the latest one
+        if (latestVersion === version) {
+          const newLatest = versionHistory[0]?.version || null;
+
+          setLatestVersion(newLatest);
+        }
+
+        await Swal.fire({
+          icon: "success",
+          title: "Deleted!",
+          text: `Version ${version} has been deleted successfully.`,
+          confirmButtonText: "OK",
+        });
+      } catch (error) {
+        console.error("Failed to delete version:", error);
+        await Swal.fire({
+          icon: "error",
+          title: "Delete Failed",
+          text: "Failed to delete version. Please try again.",
+          confirmButtonText: "OK",
+        });
+      }
+    },
+    [graph.graph_id, latestVersion],
   );
 
   // Handle publishing graph
@@ -786,13 +844,6 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
           }));
 
           setNodes(restoredNodes);
-
-          // Restore viewport if available
-          if (graph.viewport) {
-            setTimeout(() => {
-              setViewport(graph.viewport!, { duration: 300 });
-            }, 100);
-          }
         }
 
         // Load latest version
@@ -828,9 +879,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
     // Debounce save by 1 second
     saveTimeoutRef.current = setTimeout(async () => {
       try {
-        const viewport = getViewport();
-
-        await onSave(nodes, edges, viewport);
+        await onSave(nodes, edges);
       } catch (error) {
         console.error("Failed to save graph:", error);
       }
@@ -841,28 +890,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [nodes, edges, isLoaded, graph.graph_id, getViewport, onSave]);
-
-  // Save viewport changes separately with debounce
-  const viewportTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const onMoveEnd = useCallback(() => {
-    if (!isLoaded) return;
-
-    if (viewportTimeoutRef.current) {
-      clearTimeout(viewportTimeoutRef.current);
-    }
-
-    viewportTimeoutRef.current = setTimeout(async () => {
-      try {
-        const viewport = getViewport();
-
-        await onSave(nodes, edges, viewport);
-      } catch (error) {
-        console.error("Failed to save viewport:", error);
-      }
-    }, 1000);
-  }, [isLoaded, graph.graph_id, nodes, edges, getViewport, onSave]);
+  }, [nodes, edges, isLoaded, graph.graph_id, onSave]);
 
   // Don't render until graph is loaded to prevent autosave of empty canvas
   if (!isLoaded) {
@@ -1026,7 +1054,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
         edges={edges}
         edgesReconnectable={false}
         elementsSelectable={true}
-        fitView={!isLoaded}
+        fitView={true}
         nodeTypes={nodeTypes}
         nodes={nodes}
         nodesConnectable={true}
@@ -1034,7 +1062,6 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
         onConnect={onConnect}
         onEdgeClick={onEdgeClick}
         onEdgesChange={onEdgesChange}
-        onMoveEnd={onMoveEnd}
         onNodesChange={onNodesChange}
         onPaneClick={onPaneClick}
       >
@@ -1069,6 +1096,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
               <ModalBody>
                 <VersionHistoryList
                   graphId={graph.graph_id}
+                  onDelete={handleDeleteVersion}
                   onRestore={handleRestoreVersion}
                 />
               </ModalBody>
@@ -1197,8 +1225,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
                         Pan around by clicking and dragging on the empty canvas
                       </li>
                       <li>
-                        Your viewport position and zoom level are saved
-                        automatically
+                        The graph will automatically fit to view when loaded
                       </li>
                     </ul>
                   </section>
@@ -1227,11 +1254,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
 
 interface PCDNetworkGraphEditorProps {
   graph: GraphState;
-  onSave: (
-    nodes: Node[],
-    edges: Edge[],
-    viewport: { x: number; y: number; zoom: number },
-  ) => Promise<void>;
+  onSave: (nodes: Node[], edges: Edge[], name?: string) => Promise<void>;
 }
 
 const PCDNetworkGraphEditor: React.FC<PCDNetworkGraphEditorProps> = ({

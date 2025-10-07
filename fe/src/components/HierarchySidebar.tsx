@@ -122,8 +122,11 @@ const HierarchySidebar: React.FC<HierarchySidebarProps> = ({
 
   return (
     <div
-      className={`fixed top-4 z-20 w-80 h-[80vh] overflow-y-auto border border-gray-300 rounded-lg bg-white/80 backdrop-blur-sm transition-all duration-300 ${isMinimized ? "left-[-310px] hover:left-[-305px] cursor-pointer" : "left-4"
-        }`}
+      className={`fixed top-4 z-20 w-80 h-[80vh] border border-gray-300 rounded-lg bg-white/80 backdrop-blur-sm transition-all duration-300 ${
+        isMinimized
+          ? "left-[-310px] hover:left-[-305px] cursor-pointer overflow-y-hidden"
+          : "left-4 overflow-y-auto"
+      }`}
       onClick={isMinimized ? () => setIsMinimized(false) : undefined}
     >
       <div className="p-4 relative">
