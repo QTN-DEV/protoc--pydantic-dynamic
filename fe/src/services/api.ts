@@ -18,18 +18,21 @@ export const apiService = {
   async generatePydantic(
     request: PydanticClassRequest,
   ): Promise<GenerateResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/generate`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `${API_BASE_URL}/core-truth-template/generate`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          class_name: request.className,
+          class_description: request.classDescription,
+          attributes: request.attributes.map(serializeAttribute),
+          prompt: request.prompt,
+        }),
       },
-      body: JSON.stringify({
-        class_name: request.className,
-        class_description: request.classDescription,
-        attributes: request.attributes.map(serializeAttribute),
-        prompt: request.prompt,
-      }),
-    });
+    );
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -46,12 +49,15 @@ export const apiService = {
   },
 
   async loadGraph(graphId: string): Promise<GraphState> {
-    const response = await fetch(`${API_BASE_URL}/api/graph/${graphId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `${API_BASE_URL}/core-truth-template/graph/${graphId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
 
     if (!response.ok) {
       throw new Error("Failed to load graph");
@@ -68,19 +74,22 @@ export const apiService = {
     name?: string,
     systemPrompt?: string,
   ): Promise<GraphState> {
-    const response = await fetch(`${API_BASE_URL}/api/graph/${graphId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `${API_BASE_URL}/core-truth-template/graph/${graphId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          nodes,
+          edges,
+          viewport,
+          system_prompt: systemPrompt,
+        }),
       },
-      body: JSON.stringify({
-        name,
-        nodes,
-        edges,
-        viewport,
-        system_prompt: systemPrompt,
-      }),
-    });
+    );
 
     if (!response.ok) {
       throw new Error("Failed to save graph");
@@ -94,7 +103,7 @@ export const apiService = {
     setAsActive: boolean = false,
   ): Promise<PublishResponse> {
     const response = await fetch(
-      `${API_BASE_URL}/api/graph/${graphId}/publish?set_as_active=${setAsActive}`,
+      `${API_BASE_URL}/core-truth-template/graph/${graphId}/publish?set_as_active=${setAsActive}`,
       {
         method: "POST",
         headers: {
@@ -112,7 +121,7 @@ export const apiService = {
 
   async getLatestVersion(graphId: string): Promise<LatestVersionResponse> {
     const response = await fetch(
-      `${API_BASE_URL}/api/graph/${graphId}/latest-version`,
+      `${API_BASE_URL}/core-truth-template/graph/${graphId}/latest-version`,
       {
         method: "GET",
         headers: {
@@ -133,7 +142,7 @@ export const apiService = {
     limit: number = 5,
   ): Promise<VersionHistory[]> {
     const response = await fetch(
-      `${API_BASE_URL}/api/graph/${graphId}/versions?limit=${limit}`,
+      `${API_BASE_URL}/core-truth-template/graph/${graphId}/versions?limit=${limit}`,
       {
         method: "GET",
         headers: {
@@ -151,7 +160,7 @@ export const apiService = {
 
   async restoreVersion(graphId: string, version: number): Promise<GraphState> {
     const response = await fetch(
-      `${API_BASE_URL}/api/graph/${graphId}/restore/${version}`,
+      `${API_BASE_URL}/core-truth-template/graph/${graphId}/restore/${version}`,
       {
         method: "POST",
         headers: {
@@ -172,7 +181,7 @@ export const apiService = {
     version: number,
   ): Promise<{ message: string; graph_id: string; version: number }> {
     const response = await fetch(
-      `${API_BASE_URL}/api/graph/${graphId}/version/${version}`,
+      `${API_BASE_URL}/core-truth-template/graph/${graphId}/version/${version}`,
       {
         method: "DELETE",
         headers: {
@@ -198,7 +207,7 @@ export const apiService = {
     is_active: boolean;
   }> {
     const response = await fetch(
-      `${API_BASE_URL}/api/graph/${graphId}/version/${version}/set-active`,
+      `${API_BASE_URL}/core-truth-template/graph/${graphId}/version/${version}/set-active`,
       {
         method: "POST",
         headers: {
@@ -215,12 +224,15 @@ export const apiService = {
   },
 
   async loadPCD(nodeId: string): Promise<PCDState> {
-    const response = await fetch(`${API_BASE_URL}/api/pcd/${nodeId}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `${API_BASE_URL}/core-truth-template/pcd/${nodeId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -239,19 +251,22 @@ export const apiService = {
     edges: Edge[],
     name?: string,
   ): Promise<PCDState> {
-    const response = await fetch(`${API_BASE_URL}/api/pcd/${nodeId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `${API_BASE_URL}/core-truth-template/pcd/${nodeId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          graph_id: graphId,
+          name,
+          nodes,
+          edges,
+          // viewport removed - positions calculated dynamically on load
+        }),
       },
-      body: JSON.stringify({
-        graph_id: graphId,
-        name,
-        nodes,
-        edges,
-        // viewport removed - positions calculated dynamically on load
-      }),
-    });
+    );
 
     if (!response.ok) {
       throw new Error("Failed to save PCD");
@@ -262,7 +277,7 @@ export const apiService = {
 
   async getPCDsByGraph(graphId: string): Promise<PCDState[]> {
     const response = await fetch(
-      `${API_BASE_URL}/api/pcd/by-graph/${graphId}`,
+      `${API_BASE_URL}/core-truth-template/pcd/by-graph/${graphId}`,
       {
         method: "GET",
         headers: {
@@ -283,7 +298,7 @@ export const apiService = {
     prompt: string,
   ): Promise<GenerateFromGraphResponse> {
     const response = await fetch(
-      `${API_BASE_URL}/api/graph/${graphId}/generate`,
+      `${API_BASE_URL}/core-truth-template/graph/${graphId}/generate`,
       {
         method: "POST",
         headers: {

@@ -5,10 +5,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.controllers.graph import router as graph_router
-from src.controllers.health import router as health_router
 from src.controllers.pydantic_dynamic_class import router as pcd_router
 from src.controllers.pydantic_generator import router as pydantic_router
-from src.controllers.root import router as root_router
 from src.utils.mongodb import MongoDB
 
 load_dotenv()
@@ -33,11 +31,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(root_router)
-app.include_router(health_router)
-app.include_router(pydantic_router, prefix="/api")
-app.include_router(graph_router, prefix="/api")
-app.include_router(pcd_router, prefix="/api")
+app.include_router(pydantic_router, prefix="/core-truth-template")
+app.include_router(graph_router, prefix="/core-truth-template")
+app.include_router(pcd_router, prefix="/core-truth-template")
 
 if __name__ == "__main__":
     import uvicorn
