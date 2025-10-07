@@ -1,6 +1,8 @@
-from pydantic import BaseModel, Field
-from typing import Optional, List, Union, Any
 from enum import Enum
+from typing import Any
+
+from pydantic import BaseModel, Field
+
 
 class AttributeType(str, Enum):
     STRING = "string"
@@ -14,16 +16,16 @@ class PydanticAttribute(BaseModel):
     type: AttributeType
     nullable: bool
     description: str
-    default_value: Optional[Union[str, int]] = Field(None, alias="defaultValue")
-    nested_attributes: Optional[List['PydanticAttribute']] = Field(None, alias="nestedAttributes")
+    default_value: str | int | None = Field(None, alias="defaultValue")
+    nested_attributes: list['PydanticAttribute'] | None = Field(None, alias="nestedAttributes")
 
     class Config:
         populate_by_name = True
 
 class PydanticClassRequest(BaseModel):
     class_name: str = Field(alias="className")
-    class_description: Optional[str] = Field(None, alias="classDescription")
-    attributes: List[PydanticAttribute]
+    class_description: str | None = Field(None, alias="classDescription")
+    attributes: list[PydanticAttribute]
     prompt: str
 
     class Config:

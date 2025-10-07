@@ -1,0 +1,66 @@
+[tool.ruff]
+# Set maximum line length
+line-length = 88
+
+# Set target version
+target-version = "py310"
+
+[tool.ruff.lint]
+# Enable the standard set of rules
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "C",   # mccabe
+    "N",   # naming
+    "UP",  # pyupgrade
+    "YTT", # flake8-2020
+    "ANN", # flake8-annotations
+    "ASYNC", # flake8-async
+    "BLE", # flake8-blind-except
+    "B",   # flake8-bugbear
+    "A",   # flake8-builtins
+    "COM", # flake8-commas
+    "C9",  # mccabe
+    "DTZ", # flake8-datetimez
+    "EXE", # flake8-executable
+    "FA",  # flake8-future-annotations
+    "ISC", # flake8-implicit-str-concat
+    "ICN", # flake8-import-conventions
+    "G",   # flake8-logging-format
+    "PIE", # flake8-pie
+    "PL",  # pylint
+    "PT",  # flake8-pytest-style
+    "PYI", # flake8-pyi
+    "RUF", # ruff-specific rules
+    "S",   # flake8-bandit
+    "SIM", # flake8-simplify
+    "TID", # flake8-tidy-imports
+    "TCH", # flake8-type-checking
+    "ARG", # flake8-unused-arguments
+    "PTH", # flake8-use-pathlib
+    "PD",  # pandas-vet
+    "PGH", # pygrep-hooks
+    "RET", # flake8-return
+    "SLF", # flake8-self
+    "SLOT", # flake8-slots
+    "TRY", # tryceratops
+    "FLY", # flynt
+    "PERF", # perflint
+    "FURB", # refurb
+    "LOG", # flake8-logging
+]
+
+# Exclude files/directories
+extend-ignore = [
+    "PLR",  # Design related pylint codes
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+known-third-party = ["fastapi", "pydantic", "beanie", "motor", "instructor", "dotenv", "uvicorn"]
+
+[tool.ruff.lint.mccabe]
+# Unlike Flake8, default to a complexity threshold of 10.
+max-complexity = 10

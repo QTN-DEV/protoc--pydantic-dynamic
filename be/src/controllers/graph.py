@@ -1,7 +1,8 @@
+from datetime import datetime, timezone
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Any, Optional
-from datetime import datetime
 
 from src.models.graph import Graph
 from src.models.published_graph import PublishedGraph
@@ -10,10 +11,10 @@ router = APIRouter()
 
 
 class GraphStateRequest(BaseModel):
-    name: Optional[str] = None
+    name: str | None = None
     nodes: list[dict[str, Any]]
     edges: list[dict[str, Any]]
-    viewport: Optional[dict[str, Any]] = None
+    viewport: dict[str, Any] | None = None
 
 
 class GraphStateResponse(BaseModel):
@@ -21,7 +22,7 @@ class GraphStateResponse(BaseModel):
     name: str
     nodes: list[dict[str, Any]]
     edges: list[dict[str, Any]]
-    viewport: Optional[dict[str, Any]]
+    viewport: dict[str, Any] | None
     updated_at: datetime
 
 
@@ -34,7 +35,7 @@ class PublishResponse(BaseModel):
 
 
 @router.get("/graph/{graph_id}", response_model=GraphStateResponse)
-async def get_graph(graph_id: str):
+async def get_graph(graph_id: str) -> GraphStateResponse:
     """Load graph state by graph_id"""
     graph = await Graph.find_one(Graph.graph_id == graph_id)
 
@@ -46,7 +47,7 @@ async def get_graph(graph_id: str):
             nodes=[],
             edges=[],
             viewport=None,
-            updated_at=datetime.utcnow()
+            updated_at=datetime.now(timezone.utc),
         )
 
     return GraphStateResponse(
@@ -55,12 +56,12 @@ async def get_graph(graph_id: str):
         nodes=graph.nodes,
         edges=graph.edges,
         viewport=graph.viewport,
-        updated_at=graph.updated_at
+        updated_at=graph.updated_at,
     )
 
 
 @router.post("/graph/{graph_id}", response_model=GraphStateResponse)
-async def save_graph(graph_id: str, state: GraphStateRequest):
+async def save_graph(graph_id: str, state: GraphStateRequest) -> GraphStateResponse:
     """Save or update graph state"""
     graph = await Graph.find_one(Graph.graph_id == graph_id)
 
@@ -71,7 +72,7 @@ async def save_graph(graph_id: str, state: GraphStateRequest):
         graph.nodes = state.nodes
         graph.edges = state.edges
         graph.viewport = state.viewport
-        graph.updated_at = datetime.utcnow()
+        graph.updated_at = datetime.now(timezone.utc)
         await graph.save()
     else:
         # Create new graph
@@ -80,7 +81,7 @@ async def save_graph(graph_id: str, state: GraphStateRequest):
             name=state.name or "Untitled Graph",
             nodes=state.nodes,
             edges=state.edges,
-            viewport=state.viewport
+            viewport=state.viewport,
         )
         await graph.insert()
 
@@ -90,12 +91,12 @@ async def save_graph(graph_id: str, state: GraphStateRequest):
         nodes=graph.nodes,
         edges=graph.edges,
         viewport=graph.viewport,
-        updated_at=graph.updated_at
+        updated_at=graph.updated_at,
     )
 
 
 @router.delete("/graph/{graph_id}")
-async def delete_graph(graph_id: str):
+async def delete_graph(graph_id: str) -> dict[str, str | int]:
     """Delete a graph by graph_id"""
     graph = await Graph.find_one(Graph.graph_id == graph_id)
 
@@ -107,7 +108,7 @@ async def delete_graph(graph_id: str):
 
 
 @router.post("/graph/{graph_id}/publish", response_model=PublishResponse)
-async def publish_graph(graph_id: str):
+async def publish_graph(graph_id: str) -> PublishResponse:
     """Publish graph as a versioned snapshot"""
     # Get current graph state
     graph = await Graph.find_one(Graph.graph_id == graph_id)
@@ -117,7 +118,7 @@ async def publish_graph(graph_id: str):
 
     # Find the latest published version for this graph_id
     latest_published = await PublishedGraph.find(
-        PublishedGraph.graph_id == graph_id
+        PublishedGraph.graph_id == graph_id,
     ).sort(-PublishedGraph.version).first_or_none()
 
     # Determine next version number
@@ -130,7 +131,7 @@ async def publish_graph(graph_id: str):
         name=graph.name,
         nodes=graph.nodes,
         edges=graph.edges,
-        viewport=graph.viewport
+        viewport=graph.viewport,
     )
     await published_graph.insert()
 
@@ -139,15 +140,15 @@ async def publish_graph(graph_id: str):
         version=published_graph.version,
         name=published_graph.name,
         published_at=published_graph.published_at,
-        message=f"Graph published successfully as version {next_version}"
+        message=f"Graph published successfully as version {next_version}",
     )
 
 
 @router.get("/graph/{graph_id}/published/latest", response_model=GraphStateResponse)
-async def get_latest_published_graph(graph_id: str):
+async def get_latest_published_graph(graph_id: str) -> GraphStateResponse:
     """Get the latest published version of a graph"""
     latest_published = await PublishedGraph.find(
-        PublishedGraph.graph_id == graph_id
+        PublishedGraph.graph_id == graph_id,
     ).sort(-PublishedGraph.version).first_or_none()
 
     if not latest_published:
@@ -159,5 +160,5 @@ async def get_latest_published_graph(graph_id: str):
         nodes=latest_published.nodes,
         edges=latest_published.edges,
         viewport=latest_published.viewport,
-        updated_at=latest_published.published_at
+        updated_at=latest_published.published_at,
     )

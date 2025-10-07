@@ -7,6 +7,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     const graphId = uuidv7();
+
     navigate(`/${graphId}`);
   }, [navigate]);
 

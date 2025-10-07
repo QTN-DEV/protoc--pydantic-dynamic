@@ -82,9 +82,13 @@ const AttributeNode: React.FC<NodeProps> = ({ data }) => {
             >
               <SelectItem key={AttributeType.STRING}>String</SelectItem>
               <SelectItem key={AttributeType.INT}>Integer</SelectItem>
-              <SelectItem key={AttributeType.LIST_STRING}>List of String</SelectItem>
+              <SelectItem key={AttributeType.LIST_STRING}>
+                List of String
+              </SelectItem>
               <SelectItem key={AttributeType.NESTED}>Nested</SelectItem>
-              <SelectItem key={AttributeType.LIST_NESTED}>List of Nested</SelectItem>
+              <SelectItem key={AttributeType.LIST_NESTED}>
+                List of Nested
+              </SelectItem>
             </Select>
 
             <Input
@@ -121,7 +125,8 @@ const AttributeNode: React.FC<NodeProps> = ({ data }) => {
               onChange={(e) => onAttributeChange("description", e.target.value)}
             />
 
-            {(attribute.type === AttributeType.NESTED || attribute.type === AttributeType.LIST_NESTED) &&
+            {(attribute.type === AttributeType.NESTED ||
+              attribute.type === AttributeType.LIST_NESTED) &&
               onAddNestedAttribute && (
                 <Button
                   fullWidth

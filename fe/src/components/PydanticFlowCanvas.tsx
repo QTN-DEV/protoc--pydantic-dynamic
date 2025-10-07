@@ -11,7 +11,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { Textarea, Button } from "@heroui/react";
 import Swal from "sweetalert2";
-import {v7 as uuidv7} from "uuid";
+import { v7 as uuidv7 } from "uuid";
 
 import ClassDefinitionNode from "./ClassDefinitionNode";
 import AttributeNode from "./AttributeNode";
@@ -179,7 +179,11 @@ const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
           const updatedAttribute = { ...currentAttribute, [field]: value };
 
           // Clear nested attributes if type is no longer NESTED
-          if (field === "type" && value !== AttributeType.NESTED && value !== AttributeType.LIST_NESTED) {
+          if (
+            field === "type" &&
+            value !== AttributeType.NESTED &&
+            value !== AttributeType.LIST_NESTED
+          ) {
             updatedAttribute.nestedAttributes = undefined;
           }
 
@@ -222,7 +226,10 @@ const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
       const attribute = { ...(attributeNode.data as any).attribute };
 
       // If this attribute has nested attributes
-      if (attribute.type === AttributeType.NESTED || attribute.type === AttributeType.LIST_NESTED) {
+      if (
+        attribute.type === AttributeType.NESTED ||
+        attribute.type === AttributeType.LIST_NESTED
+      ) {
         const nestedAttributeNodes = attributeNodes.filter((n) => {
           return edges.some(
             (e) => e.source === attributeNode.id && e.target === n.id,

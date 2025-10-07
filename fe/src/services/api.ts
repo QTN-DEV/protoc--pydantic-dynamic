@@ -1,9 +1,10 @@
+import { Node, Edge } from "@xyflow/react";
+
 import {
   PydanticClassRequest,
   GenerateResponse,
   PydanticAttribute,
 } from "@/types/pydantic";
-import { Node, Edge } from "@xyflow/react";
 
 const API_BASE_URL = "http://localhost:8000";
 
@@ -107,12 +108,15 @@ export const apiService = {
   },
 
   async publishGraph(graphId: string): Promise<PublishResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/graph/${graphId}/publish`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `${API_BASE_URL}/api/graph/${graphId}/publish`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
 
     if (!response.ok) {
       throw new Error("Failed to publish graph");

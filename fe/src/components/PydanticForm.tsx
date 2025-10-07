@@ -70,7 +70,11 @@ const PydanticForm: React.FC<PydanticFormProps> = ({ onSubmit }) => {
 
     newAttributes[index] = { ...newAttributes[index], [field]: value };
 
-    if (field === "type" && value !== AttributeType.NESTED && value !== AttributeType.LIST_NESTED) {
+    if (
+      field === "type" &&
+      value !== AttributeType.NESTED &&
+      value !== AttributeType.LIST_NESTED
+    ) {
       newAttributes[index].nestedAttributes = undefined;
     }
 
@@ -253,12 +257,16 @@ const PydanticForm: React.FC<PydanticFormProps> = ({ onSubmit }) => {
         >
           <SelectItem key={AttributeType.STRING}>String</SelectItem>
           <SelectItem key={AttributeType.INT}>Integer</SelectItem>
-          <SelectItem key={AttributeType.LIST_STRING}>List of String</SelectItem>
+          <SelectItem key={AttributeType.LIST_STRING}>
+            List of String
+          </SelectItem>
           {!isNested ? (
             <SelectItem key={AttributeType.NESTED}>Nested</SelectItem>
           ) : null}
           {!isNested ? (
-            <SelectItem key={AttributeType.LIST_NESTED}>List of Nested</SelectItem>
+            <SelectItem key={AttributeType.LIST_NESTED}>
+              List of Nested
+            </SelectItem>
           ) : null}
         </Select>
 
@@ -312,28 +320,30 @@ const PydanticForm: React.FC<PydanticFormProps> = ({ onSubmit }) => {
         }
       />
 
-      {!isNested && (attr.type === AttributeType.NESTED || attr.type === AttributeType.LIST_NESTED) && (
-        <div className="mt-3">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-600">
-              Nested Attributes
-            </span>
-            <Button
-              color="primary"
-              size="sm"
-              variant="light"
-              onClick={() => addNestedAttribute(index)}
-            >
-              + Add
-            </Button>
+      {!isNested &&
+        (attr.type === AttributeType.NESTED ||
+          attr.type === AttributeType.LIST_NESTED) && (
+          <div className="mt-3">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium text-gray-600">
+                Nested Attributes
+              </span>
+              <Button
+                color="primary"
+                size="sm"
+                variant="light"
+                onClick={() => addNestedAttribute(index)}
+              >
+                + Add
+              </Button>
+            </div>
+            <div className="ml-4 border-l-2 border-blue-200 pl-3">
+              {attr.nestedAttributes?.map((nestedAttr, nestedIndex) =>
+                renderAttribute(nestedAttr, nestedIndex, true, index),
+              )}
+            </div>
           </div>
-          <div className="ml-4 border-l-2 border-blue-200 pl-3">
-            {attr.nestedAttributes?.map((nestedAttr, nestedIndex) =>
-              renderAttribute(nestedAttr, nestedIndex, true, index),
-            )}
-          </div>
-        </div>
-      )}
+        )}
     </div>
   );
 

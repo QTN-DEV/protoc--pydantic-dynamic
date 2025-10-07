@@ -1,8 +1,9 @@
-import instructor
-from pydantic import BaseModel
 from typing import (
     TypeVar,
 )
+
+import instructor
+from pydantic import BaseModel
 
 T = TypeVar("T", bound=BaseModel)
 
