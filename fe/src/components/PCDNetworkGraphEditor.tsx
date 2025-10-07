@@ -33,7 +33,7 @@ import { v7 as uuidv7 } from "uuid";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 
-import { apiService } from "@/services/api";
+import { apiService, VersionHistory } from "@/services/api";
 
 interface NetworkNode {
   id: string;
@@ -122,6 +122,80 @@ const nodeTypes = {
   networkNode: NetworkNodeComponent,
 };
 
+interface VersionHistoryListProps {
+  graphId: string;
+  onRestore: (version: number) => void;
+}
+
+const VersionHistoryList: React.FC<VersionHistoryListProps> = ({
+  graphId,
+  onRestore,
+}) => {
+  const [versions, setVersions] = useState<VersionHistory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadVersions = async () => {
+      try {
+        const versionHistory = await apiService.getVersionHistory(graphId, 5);
+
+        setVersions(versionHistory);
+      } catch (error) {
+        console.error("Failed to load version history:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadVersions();
+  }, [graphId]);
+
+  if (isLoading) {
+    return <div className="text-center py-4">Loading versions...</div>;
+  }
+
+  if (versions.length === 0) {
+    return (
+      <div className="text-center py-4 text-gray-600">
+        No published versions yet.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {versions.map((version) => (
+        <Card key={version.version} className="border border-gray-200">
+          <CardBody className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Version {version.version}
+                </h3>
+                <p className="text-sm text-gray-600">{version.name}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Published:{" "}
+                  {new Date(version.published_at).toLocaleString("en-US", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })}
+                </p>
+              </div>
+              <Button
+                color="primary"
+                size="sm"
+                onPress={() => onRestore(version.version)}
+              >
+                Restore
+              </Button>
+            </div>
+          </CardBody>
+        </Card>
+      ))}
+    </div>
+  );
+};
+
 type ConnectionType = "one-way" | "two-way";
 
 // Edge color constants
@@ -149,10 +223,16 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempGraphName, setTempGraphName] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
+  const [latestVersion, setLatestVersion] = useState<number | null>(null);
   const {
     isOpen: isHelpOpen,
     onOpen: onHelpOpen,
     onOpenChange: onHelpOpenChange,
+  } = useDisclosure();
+  const {
+    isOpen: isVersionHistoryOpen,
+    onOpen: onVersionHistoryOpen,
+    onOpenChange: onVersionHistoryOpenChange,
   } = useDisclosure();
   const { getViewport, setViewport } = useReactFlow();
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -613,11 +693,81 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
     setIsEditingName(false);
   }, [graphName]);
 
+  // Handle restoring a version
+  const handleRestoreVersion = useCallback(
+    async (version: number) => {
+      try {
+        const result = await Swal.fire({
+          icon: "warning",
+          title: "Restore Version?",
+          text: `Are you sure you want to restore version ${version}? This will replace your current work.`,
+          showCancelButton: true,
+          confirmButtonText: "Yes, restore it",
+          cancelButtonText: "Cancel",
+        });
+
+        if (!result.isConfirmed) return;
+
+        const graphState = await apiService.restoreVersion(graphId, version);
+
+        // Restore nodes with proper callbacks
+        const restoredNodes = graphState.nodes.map((node: any) => ({
+          ...node,
+          data: {
+            node: node.data.node || { id: node.id, name: "" },
+            onNameChange: (name: string) => updateNodeName(node.id, name),
+            onEdit: () => handleEditNode(node.id),
+            onDelete: () => deleteNode(node.id),
+          },
+        }));
+
+        setNodes(restoredNodes);
+        setEdges(graphState.edges);
+
+        // Restore viewport if available
+        if (graphState.viewport) {
+          setViewport(graphState.viewport, { duration: 300 });
+        }
+
+        // Close the modal
+        onVersionHistoryOpenChange();
+
+        await Swal.fire({
+          icon: "success",
+          title: "Restored!",
+          text: `Version ${version} has been restored successfully.`,
+          confirmButtonText: "OK",
+        });
+      } catch (error) {
+        console.error("Failed to restore version:", error);
+        await Swal.fire({
+          icon: "error",
+          title: "Restore Failed",
+          text: "Failed to restore version. Please try again.",
+          confirmButtonText: "OK",
+        });
+      }
+    },
+    [
+      graphId,
+      onVersionHistoryOpenChange,
+      setNodes,
+      setEdges,
+      setViewport,
+      updateNodeName,
+      handleEditNode,
+      deleteNode,
+    ],
+  );
+
   // Handle publishing graph
   const handlePublish = useCallback(async () => {
     setIsPublishing(true);
     try {
       const result = await apiService.publishGraph(graphId);
+
+      // Update latest version after successful publish
+      setLatestVersion(result.version);
 
       await Swal.fire({
         icon: "success",
@@ -681,6 +831,15 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
           }
         }
 
+        // Load latest version
+        try {
+          const versionInfo = await apiService.getLatestVersion(graphId);
+
+          setLatestVersion(versionInfo.version);
+        } catch (error) {
+          console.error("Failed to load version info:", error);
+        }
+
         setIsLoaded(true);
       } catch (error) {
         console.error("Failed to load graph:", error);
@@ -741,41 +900,66 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
     }, 1000);
   }, [isLoaded, graphId, nodes, edges, getViewport]);
 
+  // Don't render until graph is loaded to prevent autosave of empty canvas
+  if (!isLoaded) {
+    return null;
+  }
+
   return (
     <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
       {/* Graph Name Display */}
-      <div className="absolute top-4 left-4 z-20 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-gray-200">
-        {isEditingName ? (
-          <input
-            ref={nameInputRef}
-            className="text-lg font-semibold text-gray-800 bg-transparent border-none outline-none focus:ring-0"
-            style={{ minWidth: "200px" }}
-            type="text"
-            value={tempGraphName}
-            onBlur={handleSaveGraphName}
-            onChange={(e) => setTempGraphName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSaveGraphName();
-              } else if (e.key === "Escape") {
-                handleCancelNameEdit();
-              }
-            }}
-          />
-        ) : (
-          <button
-            className="text-lg font-semibold text-gray-800 cursor-pointer hover:text-blue-600 transition-colors bg-transparent border-none"
-            tabIndex={0}
-            type="button"
-            onClick={handleNameClick}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                handleNameClick();
-              }
-            }}
+      <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
+        <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-gray-200">
+          {isEditingName ? (
+            <input
+              ref={nameInputRef}
+              className="text-lg font-semibold text-gray-800 bg-transparent border-none outline-none focus:ring-0"
+              style={{ minWidth: "200px" }}
+              type="text"
+              value={tempGraphName}
+              onBlur={handleSaveGraphName}
+              onChange={(e) => setTempGraphName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSaveGraphName();
+                } else if (e.key === "Escape") {
+                  handleCancelNameEdit();
+                }
+              }}
+            />
+          ) : (
+            <button
+              className="text-lg font-semibold text-gray-800 cursor-pointer hover:text-blue-600 transition-colors bg-transparent border-none"
+              tabIndex={0}
+              type="button"
+              onClick={handleNameClick}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  handleNameClick();
+                }
+              }}
+            >
+              {graphName}
+            </button>
+          )}
+        </div>
+
+        {/* Latest Version Display */}
+        {latestVersion !== null && (
+          <Card
+            className="cursor-pointer hover:bg-gray-50 transition-colors"
+            isPressable
+            onPress={onVersionHistoryOpen}
           >
-            {graphName}
-          </button>
+            <CardBody className="px-4 py-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Latest Version:</span>
+                <span className="text-sm font-semibold text-blue-600">
+                  v{latestVersion}
+                </span>
+              </div>
+            </CardBody>
+          </Card>
         )}
       </div>
 
@@ -905,6 +1089,33 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
           ?
         </Button>
       </div>
+
+      {/* Version History Modal */}
+      <Modal
+        isOpen={isVersionHistoryOpen}
+        scrollBehavior="inside"
+        size="xl"
+        onOpenChange={onVersionHistoryOpenChange}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader>Version History</ModalHeader>
+              <ModalBody>
+                <VersionHistoryList
+                  graphId={graphId}
+                  onRestore={handleRestoreVersion}
+                />
+              </ModalBody>
+              <ModalFooter>
+                <Button color="primary" onPress={onClose}>
+                  Close
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
 
       {/* Help Modal */}
       <Modal

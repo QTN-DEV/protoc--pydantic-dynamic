@@ -34,6 +34,17 @@ class PublishResponse(BaseModel):
     message: str
 
 
+class LatestVersionResponse(BaseModel):
+    version: int | None
+    published_at: datetime | None
+
+
+class VersionHistoryItem(BaseModel):
+    version: int
+    name: str
+    published_at: datetime
+
+
 @router.get("/graph/{graph_id}", response_model=GraphStateResponse)
 async def get_graph(graph_id: str) -> GraphStateResponse:
     """Load graph state by graph_id"""
@@ -161,4 +172,87 @@ async def get_latest_published_graph(graph_id: str) -> GraphStateResponse:
         edges=latest_published.edges,
         viewport=latest_published.viewport,
         updated_at=latest_published.published_at,
+    )
+
+
+@router.get("/graph/{graph_id}/latest-version", response_model=LatestVersionResponse)
+async def get_latest_version(graph_id: str) -> LatestVersionResponse:
+    """Get the latest published version number and date for a graph"""
+    latest_published = await PublishedGraph.find(
+        PublishedGraph.graph_id == graph_id,
+    ).sort(-PublishedGraph.version).first_or_none()
+
+    if not latest_published:
+        return LatestVersionResponse(version=None, published_at=None)
+
+    return LatestVersionResponse(
+        version=latest_published.version,
+        published_at=latest_published.published_at,
+    )
+
+
+@router.get("/graph/{graph_id}/versions", response_model=list[VersionHistoryItem])
+async def get_version_history(graph_id: str, limit: int = 5) -> list[VersionHistoryItem]:
+    """Get version history for a graph"""
+    published_versions = (
+        await PublishedGraph.find(PublishedGraph.graph_id == graph_id)
+        .sort(-PublishedGraph.version)
+        .limit(limit)
+        .to_list()
+    )
+
+    return [
+        VersionHistoryItem(
+            version=pv.version,
+            name=pv.name,
+            published_at=pv.published_at,
+        )
+        for pv in published_versions
+    ]
+
+
+@router.post("/graph/{graph_id}/restore/{version}", response_model=GraphStateResponse)
+async def restore_version(graph_id: str, version: int) -> GraphStateResponse:
+    """Restore a graph to a specific published version"""
+    # Find the published version
+    published_version = await PublishedGraph.find_one(
+        PublishedGraph.graph_id == graph_id,
+        PublishedGraph.version == version,
+    )
+
+    if not published_version:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Published version {version} not found for graph {graph_id}",
+        )
+
+    # Find or create the current graph
+    graph = await Graph.find_one(Graph.graph_id == graph_id)
+
+    if graph:
+        # Update existing graph with published version state
+        graph.name = published_version.name
+        graph.nodes = published_version.nodes
+        graph.edges = published_version.edges
+        graph.viewport = published_version.viewport
+        graph.updated_at = datetime.now(timezone.utc)
+        await graph.save()
+    else:
+        # Create new graph with published version state
+        graph = Graph(
+            graph_id=graph_id,
+            name=published_version.name,
+            nodes=published_version.nodes,
+            edges=published_version.edges,
+            viewport=published_version.viewport,
+        )
+        await graph.insert()
+
+    return GraphStateResponse(
+        graph_id=graph.graph_id,
+        name=graph.name,
+        nodes=graph.nodes,
+        edges=graph.edges,
+        viewport=graph.viewport,
+        updated_at=graph.updated_at,
     )

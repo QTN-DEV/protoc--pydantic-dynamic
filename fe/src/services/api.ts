@@ -25,6 +25,17 @@ export interface PublishResponse {
   message: string;
 }
 
+export interface LatestVersionResponse {
+  version: number | null;
+  published_at: string | null;
+}
+
+export interface VersionHistory {
+  version: number;
+  published_at: string;
+  name: string;
+}
+
 const serializeAttribute = (attr: PydanticAttribute): any => ({
   name: attr.name,
   type: attr.type,
@@ -120,6 +131,63 @@ export const apiService = {
 
     if (!response.ok) {
       throw new Error("Failed to publish graph");
+    }
+
+    return await response.json();
+  },
+
+  async getLatestVersion(graphId: string): Promise<LatestVersionResponse> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/graph/${graphId}/latest-version`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to get latest version");
+    }
+
+    return await response.json();
+  },
+
+  async getVersionHistory(
+    graphId: string,
+    limit: number = 5,
+  ): Promise<VersionHistory[]> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/graph/${graphId}/versions?limit=${limit}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to get version history");
+    }
+
+    return await response.json();
+  },
+
+  async restoreVersion(graphId: string, version: number): Promise<GraphState> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/graph/${graphId}/restore/${version}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to restore version");
     }
 
     return await response.json();
