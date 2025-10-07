@@ -34,16 +34,20 @@ interface PydanticFlowCanvasProps {
   onSubmit: (data: PydanticClassRequest) => Promise<GenerateResponse>;
   isLoading: boolean;
   initialClassName?: string;
+  initialClassDescription?: string;
 }
 
 const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
   onSubmit,
   isLoading,
   initialClassName = "",
+  initialClassDescription = "",
 }) => {
   const [prompt, setPrompt] = useState("");
   const [className, setClassName] = useState(initialClassName);
-  const [classDescription, setClassDescription] = useState("");
+  const [classDescription, setClassDescription] = useState(
+    initialClassDescription,
+  );
   const [apiResponse, setApiResponse] = useState<any>(null);
 
   const initialNodes: Node[] = [];
@@ -52,12 +56,16 @@ const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // Update className when initialClassName changes
+  // Update className and classDescription when initial props change
   React.useEffect(() => {
     if (initialClassName) {
       setClassName(initialClassName);
     }
   }, [initialClassName]);
+
+  React.useEffect(() => {
+    setClassDescription(initialClassDescription);
+  }, [initialClassDescription]);
 
   // Initialize nodes after state setup
   React.useEffect(() => {

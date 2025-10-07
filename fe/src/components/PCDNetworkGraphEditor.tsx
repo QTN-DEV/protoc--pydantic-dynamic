@@ -38,6 +38,7 @@ import { apiService, GraphState, VersionHistory } from "@/services/api";
 interface NetworkNode {
   id: string;
   name: string;
+  description?: string;
 }
 
 interface NetworkNodeData {
