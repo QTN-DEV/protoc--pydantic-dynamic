@@ -128,12 +128,14 @@ interface VersionHistoryListProps {
   graphId: string;
   onRestore: (version: number) => void;
   onDelete: (version: number) => Promise<void>;
+  onSetActive: (version: number) => Promise<void>;
 }
 
 const VersionHistoryList: React.FC<VersionHistoryListProps> = ({
   graphId,
   onRestore,
   onDelete,
+  onSetActive,
 }) => {
   const [versions, setVersions] = useState<VersionHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -164,6 +166,15 @@ const VersionHistoryList: React.FC<VersionHistoryListProps> = ({
     [onDelete, loadVersions],
   );
 
+  const handleSetActive = useCallback(
+    async (version: number) => {
+      await onSetActive(version);
+      // Reload versions after setting active
+      await loadVersions();
+    },
+    [onSetActive, loadVersions],
+  );
+
   if (isLoading) {
     return <div className="text-center py-4">Loading versions...</div>;
   }
@@ -179,13 +190,23 @@ const VersionHistoryList: React.FC<VersionHistoryListProps> = ({
   return (
     <div className="space-y-3">
       {versions.map((version) => (
-        <Card key={version.version} className="border border-gray-200">
+        <Card
+          key={version.version}
+          className={`border ${version.is_active ? "border-green-500 bg-green-50" : "border-gray-200"}`}
+        >
           <CardBody className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Version {version.version}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    Version {version.version}
+                  </h3>
+                  {version.is_active && (
+                    <span className="px-2 py-0.5 text-xs font-semibold text-green-700 bg-green-200 rounded-full">
+                      Active
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-gray-600">{version.name}</p>
                 <p className="text-xs text-gray-500 mt-1">
                   Published:{" "}
@@ -195,14 +216,26 @@ const VersionHistoryList: React.FC<VersionHistoryListProps> = ({
                   })}
                 </p>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  color="primary"
-                  size="sm"
-                  onPress={() => onRestore(version.version)}
-                >
-                  Restore
-                </Button>
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <Button
+                    color="primary"
+                    size="sm"
+                    onPress={() => onRestore(version.version)}
+                  >
+                    Restore
+                  </Button>
+                  {!version.is_active && (
+                    <Button
+                      color="success"
+                      size="sm"
+                      variant="flat"
+                      onPress={() => handleSetActive(version.version)}
+                    >
+                      Set Active
+                    </Button>
+                  )}
+                </div>
                 <Button
                   color="danger"
                   size="sm"
@@ -789,19 +822,80 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
     [graph.graph_id, latestVersion],
   );
 
+  // Handle setting a version as active
+  const handleSetActiveVersion = useCallback(
+    async (version: number) => {
+      try {
+        const result = await Swal.fire({
+          icon: "question",
+          title: "Set Active Version?",
+          text: `Are you sure you want to set version ${version} as the active version?`,
+          showCancelButton: true,
+          confirmButtonText: "Yes, set as active",
+          cancelButtonText: "Cancel",
+        });
+
+        if (!result.isConfirmed) return;
+
+        await apiService.setActiveVersion(graph.graph_id, version);
+
+        await Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: `Version ${version} is now the active version.`,
+          confirmButtonText: "OK",
+        });
+      } catch (error) {
+        console.error("Failed to set active version:", error);
+        await Swal.fire({
+          icon: "error",
+          title: "Failed",
+          text: "Failed to set active version. Please try again.",
+          confirmButtonText: "OK",
+        });
+      }
+    },
+    [graph.graph_id],
+  );
+
   // Handle publishing graph
   const handlePublish = useCallback(async () => {
     setIsPublishing(true);
     try {
-      const result = await apiService.publishGraph(graph.graph_id);
+      // Ask if user wants to set this version as active
+      const result = await Swal.fire({
+        icon: "question",
+        title: "Publish Graph",
+        text: "Do you want to set this new version as the active version?",
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: "Yes, set as active",
+        denyButtonText: "No, just publish",
+        cancelButtonText: "Cancel",
+      });
+
+      if (result.isDismissed) {
+        setIsPublishing(false);
+
+        return;
+      }
+
+      const setAsActive = result.isConfirmed;
+      const publishResult = await apiService.publishGraph(
+        graph.graph_id,
+        setAsActive,
+      );
 
       // Update latest version after successful publish
-      setLatestVersion(result.version);
+      setLatestVersion(publishResult.version);
 
       await Swal.fire({
         icon: "success",
         title: "Published!",
-        text: `${result.message} - Version ${result.version}`,
+        html: `
+          ${publishResult.message} - Version ${publishResult.version}
+          ${setAsActive ? '<br/><span class="text-green-600">This version is now active.</span>' : ""}
+        `,
         confirmButtonText: "OK",
       });
     } catch (error) {
@@ -1098,6 +1192,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
                   graphId={graph.graph_id}
                   onDelete={handleDeleteVersion}
                   onRestore={handleRestoreVersion}
+                  onSetActive={handleSetActiveVersion}
                 />
               </ModalBody>
               <ModalFooter>

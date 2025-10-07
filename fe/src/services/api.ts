@@ -34,6 +34,7 @@ export interface VersionHistory {
   version: number;
   published_at: string;
   name: string;
+  is_active: boolean;
 }
 
 export interface PCDState {
@@ -127,9 +128,12 @@ export const apiService = {
     return await response.json();
   },
 
-  async publishGraph(graphId: string): Promise<PublishResponse> {
+  async publishGraph(
+    graphId: string,
+    setAsActive: boolean = false,
+  ): Promise<PublishResponse> {
     const response = await fetch(
-      `${API_BASE_URL}/api/graph/${graphId}/publish`,
+      `${API_BASE_URL}/api/graph/${graphId}/publish?set_as_active=${setAsActive}`,
       {
         method: "POST",
         headers: {
@@ -218,6 +222,32 @@ export const apiService = {
 
     if (!response.ok) {
       throw new Error("Failed to delete version");
+    }
+
+    return await response.json();
+  },
+
+  async setActiveVersion(
+    graphId: string,
+    version: number,
+  ): Promise<{
+    message: string;
+    graph_id: string;
+    version: number;
+    is_active: boolean;
+  }> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/graph/${graphId}/version/${version}/set-active`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to set active version");
     }
 
     return await response.json();

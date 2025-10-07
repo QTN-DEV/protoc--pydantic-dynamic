@@ -109,7 +109,6 @@ async def get_pcds_by_graph(graph_id: str) -> list[PCDStateResponse]:
             name=pcd.name,
             nodes=pcd.nodes,
             edges=pcd.edges,
-            viewport=pcd.viewport,
             updated_at=pcd.updated_at,
         )
         for pcd in pcds

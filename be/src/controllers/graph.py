@@ -45,6 +45,7 @@ class VersionHistoryItem(BaseModel):
     version: int
     name: str
     published_at: datetime
+    is_active: bool
 
 
 @router.get("/graph/{graph_id}", response_model=GraphStateResponse)
@@ -121,7 +122,7 @@ async def delete_graph(graph_id: str) -> dict[str, str | int]:
 
 
 @router.post("/graph/{graph_id}/publish", response_model=PublishResponse)
-async def publish_graph(graph_id: str) -> PublishResponse:
+async def publish_graph(graph_id: str, set_as_active: bool = False) -> PublishResponse:
     """Publish graph as a versioned snapshot"""
     # Get current graph state
     graph = await Graph.find_one(Graph.graph_id == graph_id)
@@ -156,6 +157,13 @@ async def publish_graph(graph_id: str) -> PublishResponse:
     # Determine next version number
     next_version = 1 if not latest_published else latest_published.version + 1
 
+    # If setting as active, unset all other active versions for this graph
+    if set_as_active:
+        await PublishedGraph.find(
+            PublishedGraph.graph_id == graph_id,
+            PublishedGraph.is_active,
+        ).update({"$set": {"is_active": False}})
+
     # Create new published snapshot
     published_graph = PublishedGraph(
         graph_id=graph.graph_id,
@@ -165,6 +173,7 @@ async def publish_graph(graph_id: str) -> PublishResponse:
         edges=graph.edges,
         viewport=graph.viewport,
         node_definitions=node_definitions,
+        is_active=set_as_active,
     )
     await published_graph.insert()
 
@@ -234,6 +243,7 @@ async def get_version_history(
             version=pv.version,
             name=pv.name,
             published_at=pv.published_at,
+            is_active=pv.is_active,
         )
         for pv in published_versions
     ]
@@ -259,6 +269,42 @@ async def delete_version(graph_id: str, version: int) -> dict[str, str | int]:
         "message": f"Version {version} deleted successfully",
         "graph_id": graph_id,
         "version": version,
+    }
+
+
+@router.post("/graph/{graph_id}/version/{version}/set-active")
+async def set_active_version(
+    graph_id: str,
+    version: int,
+) -> dict[str, str | int | bool]:
+    """Set a specific version as the active version"""
+    # Find the version to set as active
+    published_version = await PublishedGraph.find_one(
+        PublishedGraph.graph_id == graph_id,
+        PublishedGraph.version == version,
+    )
+
+    if not published_version:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Published version {version} not found for graph {graph_id}",
+        )
+
+    # Unset all other active versions for this graph
+    await PublishedGraph.find(
+        PublishedGraph.graph_id == graph_id,
+        PublishedGraph.is_active == True,  # type: ignore  # noqa: E712
+    ).update({"$set": {"is_active": False}})
+
+    # Set this version as active
+    published_version.is_active = True
+    await published_version.save()
+
+    return {
+        "message": f"Version {version} set as active",
+        "graph_id": graph_id,
+        "version": version,
+        "is_active": True,
     }
 
 
