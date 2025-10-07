@@ -1,5 +1,5 @@
-import React from "react";
-import { Chip } from "@heroui/react";
+import React, { useState } from "react";
+import { Chip, Button } from "@heroui/react";
 import { Node, Edge } from "@xyflow/react";
 
 import { PydanticAttribute } from "@/types/pydantic";
@@ -15,6 +15,7 @@ const HierarchySidebar: React.FC<HierarchySidebarProps> = ({
   edges,
   className,
 }) => {
+  const [isMinimized, setIsMinimized] = useState(true);
   const attributeNodes = nodes.filter((n) => n.type === "attribute");
 
   const buildHierarchy = () => {
@@ -42,75 +43,98 @@ const HierarchySidebar: React.FC<HierarchySidebarProps> = ({
   const hierarchy = buildHierarchy();
 
   return (
-    <div className="fixed left-4 top-4 z-20 w-80 h-[80vh] overflow-y-auto border border-gray-300 rounded-lg p-4 bg-white/80 backdrop-blur-sm">
-      <div className="space-y-3">
-        {/* Class Node */}
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <div>
-              <div className="font-medium text-primary-700">
-                {className || "Untitled Class"}
+    <div
+      className={`fixed top-4 z-20 w-80 h-[80vh] overflow-y-auto border border-gray-300 rounded-lg bg-white/80 backdrop-blur-sm transition-all duration-300 ${isMinimized ? "left-[-310px] hover:left-[-305px] cursor-pointer" : "left-4"
+        }`}
+      onClick={isMinimized ? () => setIsMinimized(false) : undefined}
+    >
+      <div className="p-4 relative">
+        <div className="space-y-3">
+          {/* Minimize Button */}
+          {!isMinimized && (
+            <div className="absolute top-2 right-2">
+              <Button
+                isIconOnly
+                className="min-w-6 w-6 h-6"
+                size="sm"
+                variant="light"
+                onPress={() => {
+                  setIsMinimized(true);
+                }}
+              >
+                ←
+              </Button>
+            </div>
+          )}
+
+          {/* Class Node */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <div>
+                <div className="font-medium text-primary-700">
+                  {className || "Untitled Class"}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Main Attributes */}
-          {hierarchy.length > 0 && (
-            <div className="ml-4 space-y-1">
-              {hierarchy.map((item, index) => (
-                <div key={item.node.id} className="space-y-1">
-                  <div className="flex items-center gap-2 justify-between">
-                    <div className="text-sm font-medium text-success-700">
-                      {item.attribute.name || `Attribute ${index + 1}`}
-                    </div>
-                    <div className="flex gap-1">
-                      <Chip color="success" size="sm" variant="flat">
-                        {item.attribute.type}
-                      </Chip>
-                      {item.attribute.nullable && (
-                        <Chip color="warning" size="sm" variant="flat">
-                          Nullable
+            {/* Main Attributes */}
+            {hierarchy.length > 0 && (
+              <div className="ml-4 space-y-1">
+                {hierarchy.map((item, index) => (
+                  <div key={item.node.id} className="space-y-1">
+                    <div className="flex items-center gap-2 justify-between">
+                      <div className="text-sm font-medium text-success-700">
+                        {item.attribute.name || `Attribute ${index + 1}`}
+                      </div>
+                      <div className="flex gap-1">
+                        <Chip color="success" size="sm" variant="flat">
+                          {item.attribute.type}
                         </Chip>
-                      )}
+                        {item.attribute.nullable && (
+                          <Chip color="warning" size="sm" variant="flat">
+                            Nullable
+                          </Chip>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Nested Attributes */}
-                  {item.nested.length > 0 && (
-                    <div className="ml-6 space-y-1">
-                      {item.nested.map((nestedItem, nestedIndex) => (
-                        <div
-                          key={nestedItem.node.id}
-                          className="flex items-center gap-2 justify-between"
-                        >
-                          <div className="text-xs font-medium text-secondary-700">
-                            {nestedItem.attribute.name ||
-                              `Nested ${nestedIndex + 1}`}
-                          </div>
-                          <div className="flex gap-1">
-                            <Chip color="secondary" size="sm" variant="flat">
-                              {nestedItem.attribute.type}
-                            </Chip>
-                            {nestedItem.attribute.nullable && (
-                              <Chip color="warning" size="sm" variant="flat">
-                                Nullable
+                    {/* Nested Attributes */}
+                    {item.nested.length > 0 && (
+                      <div className="ml-6 space-y-1">
+                        {item.nested.map((nestedItem, nestedIndex) => (
+                          <div
+                            key={nestedItem.node.id}
+                            className="flex items-center gap-2 justify-between"
+                          >
+                            <div className="text-xs font-medium text-secondary-700">
+                              {nestedItem.attribute.name ||
+                                `Nested ${nestedIndex + 1}`}
+                            </div>
+                            <div className="flex gap-1">
+                              <Chip color="secondary" size="sm" variant="flat">
+                                {nestedItem.attribute.type}
                               </Chip>
-                            )}
+                              {nestedItem.attribute.nullable && (
+                                <Chip color="warning" size="sm" variant="flat">
+                                  Nullable
+                                </Chip>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
 
-          {hierarchy.length === 0 && (
-            <div className="ml-6 text-sm text-gray-500 italic">
-              No attributes defined
-            </div>
-          )}
+            {hierarchy.length === 0 && (
+              <div className="ml-6 text-sm text-gray-500 italic">
+                No attributes defined
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

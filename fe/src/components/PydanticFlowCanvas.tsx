@@ -33,14 +33,16 @@ const nodeTypes = {
 interface PydanticFlowCanvasProps {
   onSubmit: (data: PydanticClassRequest) => Promise<GenerateResponse>;
   isLoading: boolean;
+  initialClassName?: string;
 }
 
 const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
   onSubmit,
   isLoading,
+  initialClassName = "",
 }) => {
   const [prompt, setPrompt] = useState("");
-  const [className, setClassName] = useState("");
+  const [className, setClassName] = useState(initialClassName);
   const [classDescription, setClassDescription] = useState("");
   const [apiResponse, setApiResponse] = useState<any>(null);
 
@@ -49,6 +51,13 @@ const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  // Update className when initialClassName changes
+  React.useEffect(() => {
+    if (initialClassName) {
+      setClassName(initialClassName);
+    }
+  }, [initialClassName]);
 
   // Initialize nodes after state setup
   React.useEffect(() => {
@@ -347,7 +356,7 @@ const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
       )}
 
       {/* Fixed Prompt Input */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-3xl px-4">
+      <div className="hidden absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 w-full max-w-3xl px-4">
         <Textarea
           className="bg-white/95 backdrop-blur-sm shadow-lg rounded-lg"
           label="Prompt"
@@ -359,7 +368,7 @@ const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
       </div>
 
       {/* Floating Action Button */}
-      <div className="fixed bottom-4 right-4 z-10">
+      <div className="hidden fixed bottom-4 right-4 z-10">
         <Button
           className="shadow-lg"
           color="primary"

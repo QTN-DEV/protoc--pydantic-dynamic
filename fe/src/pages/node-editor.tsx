@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
 import PydanticFlowCanvas from "@/components/PydanticFlowCanvas";
@@ -11,6 +11,26 @@ export default function NodeEditorPage() {
     node_id: string;
   }>();
   const [isLoading, setIsLoading] = useState(false);
+  const [nodeName, setNodeName] = useState("");
+
+  useEffect(() => {
+    const loadNodeName = async () => {
+      if (!graph_id || !node_id) return;
+
+      try {
+        const graphState = await apiService.loadGraph(graph_id);
+        const node = graphState.nodes.find((n) => n.id === node_id);
+
+        if (node?.data?.node?.name) {
+          setNodeName(node.data.node.name);
+        }
+      } catch (error) {
+        console.error("Failed to load node name:", error);
+      }
+    };
+
+    loadNodeName();
+  }, [graph_id, node_id]);
 
   const handleFormSubmit = async (
     data: PydanticClassRequest,
@@ -31,7 +51,11 @@ export default function NodeEditorPage() {
         Graph: <span className="font-semibold">{graph_id}</span> | Node:{" "}
         <span className="font-semibold">{node_id}</span>
       </div>
-      <PydanticFlowCanvas isLoading={isLoading} onSubmit={handleFormSubmit} />
+      <PydanticFlowCanvas
+        initialClassName={nodeName}
+        isLoading={isLoading}
+        onSubmit={handleFormSubmit}
+      />
     </div>
   );
 }

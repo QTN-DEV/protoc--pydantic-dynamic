@@ -33,7 +33,7 @@ import { v7 as uuidv7 } from "uuid";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 
-import { apiService, VersionHistory } from "@/services/api";
+import { apiService, GraphState, VersionHistory } from "@/services/api";
 
 interface NetworkNode {
   id: string;
@@ -205,21 +205,28 @@ const EDGE_COLORS = {
 } as const;
 
 interface PCDNetworkGraphEditorInnerProps {
-  graphId: string;
+  graph: GraphState;
+  onSave: (
+    nodes: Node[],
+    edges: Edge[],
+    viewport: { x: number; y: number; zoom: number },
+    name?: string,
+  ) => Promise<void>;
 }
 
 const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
-  graphId,
+  graph,
+  onSave,
 }) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>(graph.nodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(graph.edges);
   const [connectionType, setConnectionType] =
     useState<ConnectionType>("one-way");
 
   setConnectionType; // Use the variable to avoid unused warning
   const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [graphName, setGraphName] = useState("Untitled Graph");
+  const [graphName, setGraphName] = useState(graph.name);
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempGraphName, setTempGraphName] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
@@ -243,13 +250,13 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
       try {
         const viewport = getViewport();
 
-        await apiService.saveGraph(graphId, nodes, edges, viewport);
-        navigate(`/${graphId}/${nodeId}`);
+        await onSave(nodes, edges, viewport);
+        navigate(`/${graph.graph_id}/${nodeId}`);
       } catch (error) {
         console.error("Failed to save graph before editing:", error);
       }
     },
-    [graphId, nodes, edges, getViewport, navigate],
+    [graph, nodes, edges, getViewport, navigate, onSave],
   );
 
   const addNodeAtViewportCenter = useCallback(() => {
@@ -282,33 +289,6 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
 
     setNodes((nds) => [...nds, newNode]);
   }, [getViewport, setNodes, handleEditNode]);
-
-  const addNode = useCallback(
-    (
-      position: { x: number; y: number } = {
-        x: Math.random() * 500 + 100,
-        y: Math.random() * 300 + 100,
-      },
-    ) => {
-      const id = uuidv7();
-      const newNode: Node = {
-        id,
-        type: "networkNode",
-        position,
-        data: {
-          node: { id, name: "" },
-          onNameChange: (name: string) => updateNodeName(id, name),
-          onEdit: () => handleEditNode(id),
-          onDelete: () => deleteNode(id),
-        },
-      };
-
-      setNodes((nds) => [...nds, newNode]);
-    },
-    [setNodes, handleEditNode],
-  );
-
-  addNode; // Use the variable to avoid unused warning
 
   const updateNodeName = useCallback(
     (nodeId: string, name: string) => {
@@ -463,14 +443,6 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
     },
     [connectionType, setEdges, edges],
   );
-
-  const clearGraph = useCallback(() => {
-    setNodes([]);
-    setEdges([]);
-    setSelectedEdge(null);
-  }, [setNodes, setEdges]);
-
-  clearGraph; // Use the variable to avoid unused warning
 
   const onEdgeClick: EdgeMouseHandler = useCallback(
     (event, edge) => {
@@ -673,19 +645,13 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
       setGraphName(tempGraphName);
       const viewport = getViewport();
 
-      await apiService.saveGraph(
-        graphId,
-        nodes,
-        edges,
-        viewport,
-        tempGraphName,
-      );
+      await onSave(nodes, edges, viewport, tempGraphName);
       setIsEditingName(false);
     } catch (error) {
       console.error("Failed to save graph name:", error);
       setIsEditingName(false);
     }
-  }, [tempGraphName, graphId, nodes, edges, getViewport]);
+  }, [tempGraphName, graph.graph_id, nodes, edges, getViewport, onSave]);
 
   // Handle canceling name edit
   const handleCancelNameEdit = useCallback(() => {
@@ -708,7 +674,10 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
 
         if (!result.isConfirmed) return;
 
-        const graphState = await apiService.restoreVersion(graphId, version);
+        const graphState = await apiService.restoreVersion(
+          graph.graph_id,
+          version,
+        );
 
         // Restore nodes with proper callbacks
         const restoredNodes = graphState.nodes.map((node: any) => ({
@@ -749,7 +718,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
       }
     },
     [
-      graphId,
+      graph.graph_id,
       onVersionHistoryOpenChange,
       setNodes,
       setEdges,
@@ -764,7 +733,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
   const handlePublish = useCallback(async () => {
     setIsPublishing(true);
     try {
-      const result = await apiService.publishGraph(graphId);
+      const result = await apiService.publishGraph(graph.graph_id);
 
       // Update latest version after successful publish
       setLatestVersion(result.version);
@@ -786,7 +755,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
     } finally {
       setIsPublishing(false);
     }
-  }, [graphId]);
+  }, [graph.graph_id]);
 
   // Check for first visit and show help modal
   useEffect(() => {
@@ -802,7 +771,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
   useEffect(() => {
     const loadGraphState = async () => {
       try {
-        const graphState = await apiService.loadGraph(graphId);
+        const graphState = await apiService.loadGraph(graph.graph_id);
 
         // Set graph name
         setGraphName(graphState.name);
@@ -833,7 +802,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
 
         // Load latest version
         try {
-          const versionInfo = await apiService.getLatestVersion(graphId);
+          const versionInfo = await apiService.getLatestVersion(graph.graph_id);
 
           setLatestVersion(versionInfo.version);
         } catch (error) {
@@ -848,7 +817,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
     };
 
     loadGraphState();
-  }, [graphId]);
+  }, [graph.graph_id]);
 
   // Autosave graph state
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -866,7 +835,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
       try {
         const viewport = getViewport();
 
-        await apiService.saveGraph(graphId, nodes, edges, viewport);
+        await onSave(nodes, edges, viewport);
       } catch (error) {
         console.error("Failed to save graph:", error);
       }
@@ -877,7 +846,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [nodes, edges, isLoaded, graphId, getViewport]);
+  }, [nodes, edges, isLoaded, graph.graph_id, getViewport, onSave]);
 
   // Save viewport changes separately with debounce
   const viewportTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -893,12 +862,12 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
       try {
         const viewport = getViewport();
 
-        await apiService.saveGraph(graphId, nodes, edges, viewport);
+        await onSave(nodes, edges, viewport);
       } catch (error) {
         console.error("Failed to save viewport:", error);
       }
     }, 1000);
-  }, [isLoaded, graphId, nodes, edges, getViewport]);
+  }, [isLoaded, graph.graph_id, nodes, edges, getViewport, onSave]);
 
   // Don't render until graph is loaded to prevent autosave of empty canvas
   if (!isLoaded) {
@@ -947,8 +916,8 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
         {/* Latest Version Display */}
         {latestVersion !== null && (
           <Card
-            className="cursor-pointer hover:bg-gray-50 transition-colors"
             isPressable
+            className="cursor-pointer hover:bg-gray-50 transition-colors"
             onPress={onVersionHistoryOpen}
           >
             <CardBody className="px-4 py-2">
@@ -1103,7 +1072,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
               <ModalHeader>Version History</ModalHeader>
               <ModalBody>
                 <VersionHistoryList
-                  graphId={graphId}
+                  graphId={graph.graph_id}
                   onRestore={handleRestoreVersion}
                 />
               </ModalBody>
@@ -1261,15 +1230,21 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
 };
 
 interface PCDNetworkGraphEditorProps {
-  graphId: string;
+  graph: GraphState;
+  onSave: (
+    nodes: Node[],
+    edges: Edge[],
+    viewport: { x: number; y: number; zoom: number },
+  ) => Promise<void>;
 }
 
 const PCDNetworkGraphEditor: React.FC<PCDNetworkGraphEditorProps> = ({
-  graphId,
+  graph,
+  onSave,
 }) => {
   return (
     <ReactFlowProvider>
-      <PCDNetworkGraphEditorInner graphId={graphId} />
+      <PCDNetworkGraphEditorInner graph={graph} onSave={onSave} />
     </ReactFlowProvider>
   );
 };
