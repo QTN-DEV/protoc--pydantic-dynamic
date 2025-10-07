@@ -2,16 +2,16 @@ import React from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Card, CardBody, Button } from "@heroui/react";
 
+import { usePydanticFlow } from "@/contexts/PydanticFlowContext";
+
 interface ClassDefinitionNodeData {
   className: string;
   classDescription: string;
-  onClassNameChange: (name: string) => void;
-  onClassDescriptionChange: (description: string) => void;
-  onAddAttribute: () => void;
 }
 
-const ClassDefinitionNode: React.FC<NodeProps> = ({ data }) => {
+const ClassDefinitionNode: React.FC<NodeProps> = ({ data, id }) => {
   const nodeData = data as unknown as ClassDefinitionNodeData;
+  const { addAttribute } = usePydanticFlow();
 
   return (
     <div className="min-w-[300px]">
@@ -25,7 +25,7 @@ const ClassDefinitionNode: React.FC<NodeProps> = ({ data }) => {
                 {nodeData.className || "Class Definition"}
               </h3>
               {nodeData.classDescription && (
-                <p className="text-sm text-gray-600 mt-2">
+                <p className="text-sm text-gray-600 mt-2 max-w-[400px] whitespace-pre-wrap">
                   {nodeData.classDescription}
                 </p>
               )}
@@ -38,7 +38,7 @@ const ClassDefinitionNode: React.FC<NodeProps> = ({ data }) => {
                 radius="full"
                 size="lg"
                 variant="flat"
-                onPress={nodeData.onAddAttribute}
+                onPress={() => addAttribute(id)}
               >
                 +
               </Button>

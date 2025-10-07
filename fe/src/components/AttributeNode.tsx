@@ -12,24 +12,17 @@ import {
 } from "@heroui/react";
 
 import { AttributeType, PydanticAttribute } from "@/types/pydantic";
+import { usePydanticFlow } from "@/contexts/PydanticFlowContext";
 
 interface AttributeNodeData {
   attribute: PydanticAttribute;
-  onAttributeChange: (field: keyof PydanticAttribute, value: any) => void;
-  onAddNestedAttribute?: () => void;
-  onRemoveAttribute: () => void;
   isNested?: boolean;
 }
 
-const AttributeNode: React.FC<NodeProps> = ({ data }) => {
+const AttributeNode: React.FC<NodeProps> = ({ data, id }) => {
   const nodeData = data as unknown as AttributeNodeData;
-  const {
-    attribute,
-    onAttributeChange,
-    onAddNestedAttribute,
-    onRemoveAttribute,
-    isNested,
-  } = nodeData;
+  const { attribute, isNested } = nodeData;
+  const { addAttribute, updateAttribute, removeAttribute } = usePydanticFlow();
 
   return (
     <div className="min-w-[263px]">
@@ -51,7 +44,7 @@ const AttributeNode: React.FC<NodeProps> = ({ data }) => {
                 color="danger"
                 size="sm"
                 variant="light"
-                onPress={onRemoveAttribute}
+                onPress={() => removeAttribute(id)}
               >
                 ×
               </Button>
@@ -64,7 +57,7 @@ const AttributeNode: React.FC<NodeProps> = ({ data }) => {
               size="sm"
               value={attribute.name}
               variant="bordered"
-              onChange={(e) => onAttributeChange("name", e.target.value)}
+              onChange={(e) => updateAttribute(id, "name", e.target.value)}
             />
 
             <Select
@@ -77,7 +70,7 @@ const AttributeNode: React.FC<NodeProps> = ({ data }) => {
               onSelectionChange={(keys) => {
                 const selectedType = Array.from(keys)[0] as AttributeType;
 
-                onAttributeChange("type", selectedType);
+                updateAttribute(id, "type", selectedType);
               }}
             >
               <SelectItem key={AttributeType.STRING}>String</SelectItem>
@@ -98,7 +91,7 @@ const AttributeNode: React.FC<NodeProps> = ({ data }) => {
               value={attribute.defaultValue?.toString() || ""}
               variant="bordered"
               onChange={(e) =>
-                onAttributeChange("defaultValue", e.target.value)
+                updateAttribute(id, "defaultValue", e.target.value)
               }
             />
 
@@ -107,7 +100,7 @@ const AttributeNode: React.FC<NodeProps> = ({ data }) => {
                 isSelected={attribute.nullable}
                 size="sm"
                 onValueChange={(checked) =>
-                  onAttributeChange("nullable", checked)
+                  updateAttribute(id, "nullable", checked)
                 }
               >
                 Nullable
@@ -122,22 +115,21 @@ const AttributeNode: React.FC<NodeProps> = ({ data }) => {
               size="sm"
               value={attribute.description}
               variant="bordered"
-              onChange={(e) => onAttributeChange("description", e.target.value)}
+              onChange={(e) => updateAttribute(id, "description", e.target.value)}
             />
 
             {(attribute.type === AttributeType.NESTED ||
-              attribute.type === AttributeType.LIST_NESTED) &&
-              onAddNestedAttribute && (
-                <Button
-                  fullWidth
-                  color="secondary"
-                  size="sm"
-                  variant="flat"
-                  onPress={onAddNestedAttribute}
-                >
-                  + Add Nested Attribute
-                </Button>
-              )}
+              attribute.type === AttributeType.LIST_NESTED) && (
+              <Button
+                fullWidth
+                color="secondary"
+                size="sm"
+                variant="flat"
+                onPress={() => addAttribute(id, true)}
+              >
+                + Add Nested Attribute
+              </Button>
+            )}
           </div>
         </CardBody>
       </Card>

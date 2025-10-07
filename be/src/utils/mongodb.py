@@ -7,6 +7,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 # Import models at the top to avoid local imports in class methods
 from src.models.graph import Graph
 from src.models.published_graph import PublishedGraph
+from src.models.pydantic_dynamic_class import PydanticDynamicClass
 
 MONGODB_URL = "mongodb://qops:qops@3.1.94.166:27017/"
 DATABASE_NAME = "pcdnge"
@@ -21,7 +22,7 @@ class MongoDB:
         cls.client = AsyncIOMotorClient(MONGODB_URL)
         await init_beanie(
             database=cls.client[DATABASE_NAME],
-            document_models=[Graph, PublishedGraph],
+            document_models=[Graph, PublishedGraph, PydanticDynamicClass],
         )
 
     @classmethod

@@ -36,6 +36,16 @@ export interface VersionHistory {
   name: string;
 }
 
+export interface PCDState {
+  node_id: string;
+  graph_id: string;
+  name: string;
+  nodes: Node[];
+  edges: Edge[];
+  viewport: { x: number; y: number; zoom: number } | null;
+  updated_at: string;
+}
+
 const serializeAttribute = (attr: PydanticAttribute): any => ({
   name: attr.name,
   type: attr.type,
@@ -188,6 +198,71 @@ export const apiService = {
 
     if (!response.ok) {
       throw new Error("Failed to restore version");
+    }
+
+    return await response.json();
+  },
+
+  async loadPCD(nodeId: string): Promise<PCDState> {
+    const response = await fetch(`${API_BASE_URL}/api/pcd/${nodeId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error("PCD_NOT_FOUND");
+      }
+      throw new Error("Failed to load PCD");
+    }
+
+    return await response.json();
+  },
+
+  async savePCD(
+    nodeId: string,
+    graphId: string,
+    nodes: Node[],
+    edges: Edge[],
+    viewport: { x: number; y: number; zoom: number } | null,
+    name?: string,
+  ): Promise<PCDState> {
+    const response = await fetch(`${API_BASE_URL}/api/pcd/${nodeId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        graph_id: graphId,
+        name,
+        nodes,
+        edges,
+        viewport,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to save PCD");
+    }
+
+    return await response.json();
+  },
+
+  async getPCDsByGraph(graphId: string): Promise<PCDState[]> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/pcd/by-graph/${graphId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to load PCDs for graph");
     }
 
     return await response.json();

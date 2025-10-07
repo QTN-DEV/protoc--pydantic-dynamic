@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   ReactFlow,
   Background,
@@ -7,6 +7,8 @@ import {
   Edge,
   useNodesState,
   useEdgesState,
+  useReactFlow,
+  ReactFlowProvider,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Textarea, Button } from "@heroui/react";
@@ -24,6 +26,8 @@ import {
   PydanticAttribute,
   AttributeType,
 } from "@/types/pydantic";
+import { apiService } from "@/services/api";
+import { PydanticFlowProvider } from "@/contexts/PydanticFlowContext";
 
 const nodeTypes = {
   classDefinition: ClassDefinitionNode,
@@ -35,20 +39,41 @@ interface PydanticFlowCanvasProps {
   isLoading: boolean;
   initialClassName?: string;
   initialClassDescription?: string;
+  nodeId?: string;
+  graphId?: string;
 }
 
-const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
+interface PydanticFlowCanvasInnerProps extends PydanticFlowCanvasProps {
+  innerRef?: React.MutableRefObject<{
+    addAttribute: (parentId: string, isNested?: boolean) => void;
+    updateAttribute: (
+      nodeId: string,
+      field: keyof PydanticAttribute,
+      value: any,
+    ) => void;
+    removeAttribute: (nodeId: string) => void;
+    updateClassName: (name: string) => void;
+    updateClassDescription: (description: string) => void;
+  } | null>;
+}
+
+const PydanticFlowCanvasInner: React.FC<PydanticFlowCanvasInnerProps> = ({
   onSubmit,
   isLoading,
   initialClassName = "",
   initialClassDescription = "",
+  nodeId,
+  graphId,
+  innerRef,
 }) => {
+  const reactFlowInstance = useReactFlow();
   const [prompt, setPrompt] = useState("");
   const [className, setClassName] = useState(initialClassName);
   const [classDescription, setClassDescription] = useState(
     initialClassDescription,
   );
   const [apiResponse, setApiResponse] = useState<any>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   const initialNodes: Node[] = [];
   const initialEdges: Edge[] = [];
@@ -56,59 +81,12 @@ const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  // Update className and classDescription when initial props change
-  React.useEffect(() => {
-    if (initialClassName) {
-      setClassName(initialClassName);
-    }
-  }, [initialClassName]);
+  // Auto-save state
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hasLoadedRef = useRef(false);
 
-  React.useEffect(() => {
-    setClassDescription(initialClassDescription);
-  }, [initialClassDescription]);
-
-  // Initialize nodes after state setup
-  React.useEffect(() => {
-    setNodes([
-      {
-        id: "class-definition",
-        type: "classDefinition",
-        position: { x: 400, y: 50 },
-        data: {
-          className,
-          classDescription,
-          onClassNameChange: setClassName,
-          onClassDescriptionChange: setClassDescription,
-          onAddAttribute: () => addAttribute(),
-        },
-      },
-    ]);
-  }, []);
-
-  // Update class definition node data when state changes
-  React.useEffect(() => {
-    setNodes((prev) =>
-      prev.map((node) => {
-        if (node.id === "class-definition") {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              className,
-              classDescription,
-              onClassNameChange: setClassName,
-              onClassDescriptionChange: setClassDescription,
-              onAddAttribute: () => addAttribute(),
-            },
-          };
-        }
-
-        return node;
-      }),
-    );
-  }, [className, classDescription]);
-
-  const addAttribute = (parentId = "class-definition", isNested = false) => {
+  // Unified callback functions
+  const addAttribute = (parentId: string, isNested = false) => {
     const newAttributeId = `attribute-${uuidv7()}`;
 
     const newAttribute: PydanticAttribute = {
@@ -159,10 +137,6 @@ const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
       position,
       data: {
         attribute: newAttribute,
-        onAttributeChange: (field: keyof PydanticAttribute, value: any) =>
-          updateAttribute(newAttributeId, field, value),
-        onAddNestedAttribute: () => addAttribute(newAttributeId, true),
-        onRemoveAttribute: () => removeAttribute(newAttributeId),
         isNested,
       },
     };
@@ -225,6 +199,176 @@ const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
       prev.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
     );
   };
+
+  const updateClassName = (name: string) => {
+    setClassName(name);
+  };
+
+  const updateClassDescription = (description: string) => {
+    setClassDescription(description);
+  };
+
+  // Expose functions through ref
+  useEffect(() => {
+    if (innerRef) {
+      innerRef.current = {
+        addAttribute,
+        updateAttribute,
+        removeAttribute,
+        updateClassName,
+        updateClassDescription,
+      };
+    }
+  }, [nodes, edges, innerRef]);
+
+  // Load existing PCD data on mount
+  useEffect(() => {
+    const loadPCDData = async () => {
+      if (!nodeId || !graphId) {
+        // No nodeId/graphId, just initialize with default nodes
+        setNodes([
+          {
+            id: "class-definition",
+            type: "classDefinition",
+            position: { x: 400, y: 50 },
+            data: {
+              className: initialClassName,
+              classDescription: initialClassDescription,
+            },
+          },
+        ]);
+        setIsInitializing(false);
+        hasLoadedRef.current = true;
+
+        return;
+      }
+
+      try {
+        const pcdData = await apiService.loadPCD(nodeId);
+
+        // Load saved nodes and edges
+        if (pcdData.nodes && pcdData.nodes.length > 0) {
+          setNodes(pcdData.nodes);
+          setEdges(pcdData.edges || []);
+
+          // Restore viewport if available
+          if (pcdData.viewport && pcdData.viewport !== null) {
+            setTimeout(() => {
+              reactFlowInstance.setViewport({
+                x: pcdData.viewport!.x,
+                y: pcdData.viewport!.y,
+                zoom: pcdData.viewport!.zoom,
+              });
+            }, 0);
+          }
+        } else {
+          // No saved data, initialize with default nodes
+          setNodes([
+            {
+              id: "class-definition",
+              type: "classDefinition",
+              position: { x: 400, y: 50 },
+              data: {
+                className: initialClassName,
+                classDescription: initialClassDescription,
+              },
+            },
+          ]);
+        }
+      } catch (error: any) {
+        if (error.message === "PCD_NOT_FOUND") {
+          // PCD doesn't exist yet, initialize with default nodes
+          setNodes([
+            {
+              id: "class-definition",
+              type: "classDefinition",
+              position: { x: 400, y: 50 },
+              data: {
+                className: initialClassName,
+                classDescription: initialClassDescription,
+              },
+            },
+          ]);
+        } else {
+          console.error("Failed to load PCD data:", error);
+        }
+      } finally {
+        setIsInitializing(false);
+        hasLoadedRef.current = true;
+      }
+    };
+
+    loadPCDData();
+  }, []);
+
+  // Auto-save functionality with debouncing
+  useEffect(() => {
+    // Don't auto-save if we haven't loaded yet or if nodeId/graphId are missing
+    if (!hasLoadedRef.current || !nodeId || !graphId || isInitializing) {
+      return;
+    }
+
+    // Clear existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Set new timeout for auto-save (1 second debounce)
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      const viewport = reactFlowInstance.getViewport();
+
+      apiService
+        .savePCD(
+          nodeId,
+          graphId,
+          nodes,
+          edges,
+          viewport,
+          className || "Untitled PCD",
+        )
+        .catch((error) => {
+          console.error("Auto-save failed:", error);
+        });
+    }, 1000);
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [nodes, edges, nodeId, graphId, className, isInitializing]);
+
+  // Update className and classDescription when initial props change
+  React.useEffect(() => {
+    if (initialClassName) {
+      setClassName(initialClassName);
+    }
+  }, [initialClassName]);
+
+  React.useEffect(() => {
+    setClassDescription(initialClassDescription);
+  }, [initialClassDescription]);
+
+  // Update class definition node data when state changes
+  React.useEffect(() => {
+    setNodes((prev) =>
+      prev.map((node) => {
+        if (node.id === "class-definition") {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              className,
+              classDescription,
+            },
+          };
+        }
+
+        return node;
+      }),
+    );
+  }, [className, classDescription]);
 
   const collectFormData = (): Omit<PydanticClassRequest, "prompt"> => {
     const attributeNodes = nodes.filter((n) => n.type === "attribute");
@@ -406,6 +550,49 @@ const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
         <Controls />
       </ReactFlow>
     </div>
+  );
+};
+
+const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = (props) => {
+  return (
+    <ReactFlowProvider>
+      <PydanticFlowCanvasWithContext {...props} />
+    </ReactFlowProvider>
+  );
+};
+
+const PydanticFlowCanvasWithContext: React.FC<PydanticFlowCanvasProps> = (
+  props,
+) => {
+  // This intermediate component has access to the inner component's functions
+  // We need to expose them through context
+  const innerRef = useRef<{
+    addAttribute: (parentId: string, isNested?: boolean) => void;
+    updateAttribute: (
+      nodeId: string,
+      field: keyof PydanticAttribute,
+      value: any,
+    ) => void;
+    removeAttribute: (nodeId: string) => void;
+    updateClassName: (name: string) => void;
+    updateClassDescription: (description: string) => void;
+  } | null>(null);
+
+  return (
+    <PydanticFlowProvider
+      value={{
+        addAttribute: (parentId, isNested) =>
+          innerRef.current?.addAttribute(parentId, isNested),
+        updateAttribute: (nodeId, field, value) =>
+          innerRef.current?.updateAttribute(nodeId, field, value),
+        removeAttribute: (nodeId) => innerRef.current?.removeAttribute(nodeId),
+        updateClassName: (name) => innerRef.current?.updateClassName(name),
+        updateClassDescription: (description) =>
+          innerRef.current?.updateClassDescription(description),
+      }}
+    >
+      <PydanticFlowCanvasInner {...props} innerRef={innerRef} />
+    </PydanticFlowProvider>
   );
 };
 

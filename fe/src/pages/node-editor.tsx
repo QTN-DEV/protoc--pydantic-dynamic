@@ -165,7 +165,7 @@ export default function NodeEditorPage() {
       {/* Top left header section */}
       <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
         {/* Node Name */}
-        <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-gray-200">
+        <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-gray-200 w-fit min-w-[100px]">
           {isEditingNodeName ? (
             <input
               ref={nodeNameInputRef}
@@ -201,7 +201,7 @@ export default function NodeEditorPage() {
         </div>
 
         {/* Node Description */}
-        <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-gray-200">
+        <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-gray-200 max-w-[400px]">
           {isEditingDescription ? (
             <textarea
               ref={descriptionInputRef}
@@ -236,9 +236,11 @@ export default function NodeEditorPage() {
       </div>
 
       <PydanticFlowCanvas
+        graphId={graph_id}
         initialClassDescription={nodeDescription}
         initialClassName={nodeName}
         isLoading={isLoading}
+        nodeId={node_id}
         onSubmit={handleFormSubmit}
       />
     </div>
