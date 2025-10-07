@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, ClassVar
 
 from beanie import Document
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 
 class PublishedGraph(Document):
@@ -42,3 +42,46 @@ class PublishedGraph(Document):
                 "node_definitions": [],
             },
         }
+
+    def get_pydantic_class(self) -> type[BaseModel]:
+        """
+        Generate a Pydantic class from the published graph's node definitions.
+
+        Each node definition contains a stored PydanticDynamicClass definition,
+        which becomes a nested attribute in the resulting Pydantic model.
+
+        Returns:
+            A dynamically created Pydantic model class where each node definition
+            becomes a nested attribute.
+
+        Raises:
+            ValueError: If node definitions are invalid.
+        """
+        # Import at runtime to avoid circular imports
+        from src.models.pydantic_dynamic_class import (  # noqa: PLC0415
+            PydanticDynamicClass,
+        )
+
+        # Create attributes from each node definition
+        fields = {}
+        for node_def in self.node_definitions:
+            # Reconstruct PydanticDynamicClass from node definition
+            try:
+                pdc = PydanticDynamicClass(**node_def)
+            except Exception as e:
+                msg = f"Invalid node definition: {e}"
+                raise ValueError(msg) from e
+
+            # Get the Pydantic class for this node definition
+            node_class = pdc.get_pydantic_class()
+
+            # Use the PydanticDynamicClass name as attribute name
+            attr_name = pdc.name
+            # Sanitize attribute name (replace spaces/special chars with underscores)
+            attr_name = "".join(c if c.isalnum() or c == "_" else "_" for c in attr_name)
+
+            # Add as optional nested field
+            fields[attr_name] = (node_class | None, None)
+
+        # Create the Pydantic model dynamically
+        return type(self.name, (BaseModel,), {"__annotations__": fields})
