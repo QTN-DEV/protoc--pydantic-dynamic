@@ -14,7 +14,6 @@ class PCDStateRequest(BaseModel):
     name: str | None = None
     nodes: list[dict[str, Any]]
     edges: list[dict[str, Any]]
-    viewport: dict[str, Any] | None = None
 
 
 class PCDStateResponse(BaseModel):
@@ -23,7 +22,6 @@ class PCDStateResponse(BaseModel):
     name: str
     nodes: list[dict[str, Any]]
     edges: list[dict[str, Any]]
-    viewport: dict[str, Any] | None
     updated_at: datetime
 
 
@@ -41,7 +39,6 @@ async def get_pcd(node_id: str) -> PCDStateResponse:
         name=pcd.name,
         nodes=pcd.nodes,
         edges=pcd.edges,
-        viewport=pcd.viewport,
         updated_at=pcd.updated_at,
     )
 
@@ -58,7 +55,6 @@ async def save_pcd(node_id: str, state: PCDStateRequest) -> PCDStateResponse:
         pcd.graph_id = state.graph_id
         pcd.nodes = state.nodes
         pcd.edges = state.edges
-        pcd.viewport = state.viewport
         pcd.updated_at = datetime.now(timezone.utc)
         await pcd.save()
     else:
@@ -69,7 +65,6 @@ async def save_pcd(node_id: str, state: PCDStateRequest) -> PCDStateResponse:
             name=state.name or "Untitled PCD",
             nodes=state.nodes,
             edges=state.edges,
-            viewport=state.viewport,
         )
         await pcd.insert()
 
@@ -79,7 +74,6 @@ async def save_pcd(node_id: str, state: PCDStateRequest) -> PCDStateResponse:
         name=pcd.name,
         nodes=pcd.nodes,
         edges=pcd.edges,
-        viewport=pcd.viewport,
         updated_at=pcd.updated_at,
     )
 

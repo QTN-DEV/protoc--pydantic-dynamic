@@ -11,7 +11,6 @@ class PydanticDynamicClass(Document):
     name: str = Field(default="Untitled PCD")
     nodes: list[dict[str, Any]] = Field(default_factory=list)
     edges: list[dict[str, Any]] = Field(default_factory=list)
-    viewport: dict[str, Any] | None = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -37,6 +36,5 @@ class PydanticDynamicClass(Document):
                     }
                 ],
                 "edges": [{"id": "edge1", "source": "attr1", "target": "attr2"}],
-                "viewport": {"x": 0, "y": 0, "zoom": 1},
             },
         }

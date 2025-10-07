@@ -142,7 +142,6 @@ async def publish_graph(graph_id: str) -> PublishResponse:
             "name": pdc.name,
             "nodes": pdc.nodes,
             "edges": pdc.edges,
-            "viewport": pdc.viewport,
             "created_at": pdc.created_at,
             "updated_at": pdc.updated_at,
         }
@@ -286,7 +285,6 @@ async def restore_version(graph_id: str, version: int) -> GraphStateResponse:
             name=node_def["name"],
             nodes=node_def["nodes"],
             edges=node_def["edges"],
-            viewport=node_def["viewport"],
         )
         await pdc.insert()
 
