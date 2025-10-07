@@ -14,6 +14,7 @@ export interface GraphState {
   nodes: Node[];
   edges: Edge[];
   viewport: { x: number; y: number; zoom: number } | null;
+  system_prompt: string;
   updated_at: string;
 }
 
@@ -107,6 +108,7 @@ export const apiService = {
     edges: Edge[],
     viewport: { x: number; y: number; zoom: number } | null,
     name?: string,
+    systemPrompt?: string,
   ): Promise<GraphState> {
     const response = await fetch(`${API_BASE_URL}/api/graph/${graphId}`, {
       method: "POST",
@@ -118,6 +120,7 @@ export const apiService = {
         nodes,
         edges,
         viewport,
+        system_prompt: systemPrompt,
       }),
     });
 
@@ -312,6 +315,30 @@ export const apiService = {
 
     if (!response.ok) {
       throw new Error("Failed to load PCDs for graph");
+    }
+
+    return await response.json();
+  },
+
+  async generateFromGraph(
+    graphId: string,
+    prompt: string,
+  ): Promise<{ result: Record<string, any> }> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/graph/${graphId}/generate`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+
+      throw new Error(errorData.detail || "Failed to generate data");
     }
 
     return await response.json();

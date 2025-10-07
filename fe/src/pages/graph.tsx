@@ -19,8 +19,20 @@ export default function GraphPage() {
   }, [graph_id]);
 
   const onSave = useCallback(
-    async (nodes: Node[], edges: Edge[], name?: string) => {
-      await apiService.saveGraph(graph_id!, nodes, edges, null, name);
+    async (
+      nodes: Node[],
+      edges: Edge[],
+      name?: string,
+      systemPrompt?: string,
+    ) => {
+      await apiService.saveGraph(
+        graph_id!,
+        nodes,
+        edges,
+        null,
+        name,
+        systemPrompt,
+      );
     },
     [graph_id],
   );

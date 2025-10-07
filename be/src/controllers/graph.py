@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from src.models.graph import Graph
 from src.models.published_graph import PublishedGraph
 from src.models.pydantic_dynamic_class import PydanticDynamicClass
+from src.utils.openai import generate
 
 router = APIRouter()
 
@@ -16,6 +17,7 @@ class GraphStateRequest(BaseModel):
     nodes: list[dict[str, Any]]
     edges: list[dict[str, Any]]
     viewport: dict[str, Any] | None = None
+    system_prompt: str | None = None
 
 
 class GraphStateResponse(BaseModel):
@@ -24,6 +26,7 @@ class GraphStateResponse(BaseModel):
     nodes: list[dict[str, Any]]
     edges: list[dict[str, Any]]
     viewport: dict[str, Any] | None
+    system_prompt: str
     updated_at: datetime
 
 
@@ -48,6 +51,14 @@ class VersionHistoryItem(BaseModel):
     is_active: bool
 
 
+class GenerateRequest(BaseModel):
+    prompt: str
+
+
+class GenerateResponse(BaseModel):
+    result: dict[str, Any]
+
+
 @router.get("/graph/{graph_id}", response_model=GraphStateResponse)
 async def get_graph(graph_id: str) -> GraphStateResponse:
     """Load graph state by graph_id"""
@@ -61,6 +72,7 @@ async def get_graph(graph_id: str) -> GraphStateResponse:
             nodes=[],
             edges=[],
             viewport=None,
+            system_prompt="",
             updated_at=datetime.now(timezone.utc),
         )
 
@@ -70,6 +82,7 @@ async def get_graph(graph_id: str) -> GraphStateResponse:
         nodes=graph.nodes,
         edges=graph.edges,
         viewport=graph.viewport,
+        system_prompt=graph.system_prompt,
         updated_at=graph.updated_at,
     )
 
@@ -83,6 +96,8 @@ async def save_graph(graph_id: str, state: GraphStateRequest) -> GraphStateRespo
         # Update existing graph
         if state.name is not None:
             graph.name = state.name
+        if state.system_prompt is not None:
+            graph.system_prompt = state.system_prompt
         graph.nodes = state.nodes
         graph.edges = state.edges
         graph.viewport = state.viewport
@@ -96,6 +111,7 @@ async def save_graph(graph_id: str, state: GraphStateRequest) -> GraphStateRespo
             nodes=state.nodes,
             edges=state.edges,
             viewport=state.viewport,
+            system_prompt=state.system_prompt or "",
         )
         await graph.insert()
 
@@ -105,6 +121,7 @@ async def save_graph(graph_id: str, state: GraphStateRequest) -> GraphStateRespo
         nodes=graph.nodes,
         edges=graph.edges,
         viewport=graph.viewport,
+        system_prompt=graph.system_prompt,
         updated_at=graph.updated_at,
     )
 
@@ -161,7 +178,7 @@ async def publish_graph(graph_id: str, set_as_active: bool = False) -> PublishRe
     if set_as_active:
         await PublishedGraph.find(
             PublishedGraph.graph_id == graph_id,
-            PublishedGraph.is_active,
+            PublishedGraph.is_active == True,
         ).update({"$set": {"is_active": False}})
 
     # Create new published snapshot
@@ -206,6 +223,7 @@ async def get_latest_published_graph(graph_id: str) -> GraphStateResponse:
         nodes=latest_published.nodes,
         edges=latest_published.edges,
         viewport=latest_published.viewport,
+        system_prompt="",  # Published graphs don't store system_prompt
         updated_at=latest_published.published_at,
     )
 
@@ -368,5 +386,44 @@ async def restore_version(graph_id: str, version: int) -> GraphStateResponse:
         nodes=graph.nodes,
         edges=graph.edges,
         viewport=graph.viewport,
+        system_prompt=graph.system_prompt,
         updated_at=graph.updated_at,
     )
+
+
+@router.post("/graph/{graph_id}/generate", response_model=GenerateResponse)
+async def generate_from_graph(
+    graph_id: str,
+    request: GenerateRequest,
+) -> GenerateResponse:
+    """Generate structured data from a graph using AI"""
+    # Get the graph
+    graph = await Graph.find_one(Graph.graph_id == graph_id)
+
+    if not graph:
+        raise HTTPException(status_code=404, detail="Graph not found")
+
+    # Get the Pydantic class from the graph
+    try:
+        pydantic_class = await graph.get_pydantic_class()
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Failed to generate Pydantic class from graph: {e!s}",
+        ) from e
+
+    # Generate using OpenAI
+    try:
+        result = await generate(
+            prompt=request.prompt,
+            pydantic_model=pydantic_class,
+            system_prompt=graph.system_prompt,
+        )
+
+        # Convert result to dict
+        return GenerateResponse(result=result.model_dump())
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate data: {e!s}",
+        ) from e

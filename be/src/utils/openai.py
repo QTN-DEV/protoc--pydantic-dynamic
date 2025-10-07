@@ -10,21 +10,30 @@ T = TypeVar("T", bound=BaseModel)
 GPT_MODEL = "gpt-5"
 
 
-async def generate(prompt: str, pydantic_model: type[T]) -> T:
+async def generate(prompt: str, pydantic_model: type[T], system_prompt: str = "") -> T:
     client = instructor.from_provider(
         "openai/" + GPT_MODEL,
         mode=instructor.Mode.TOOLS_STRICT,
         async_client=True,
     )
+
+    messages = [
+        {
+            "role": "user",
+            "content": prompt,
+        },
+    ]
+
+    if system_prompt:
+        messages.insert(0, {
+            "role": "system",
+            "content": system_prompt,
+        })
+
     generator = client.chat.completions.create_partial(
         model=GPT_MODEL,
         response_model=pydantic_model,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            },
-        ],
+        messages=messages,
         stream=True,
     )
     result: pydantic_model | None = None

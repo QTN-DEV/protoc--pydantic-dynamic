@@ -35,6 +35,7 @@ import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 
 import { apiService, GraphState, VersionHistory } from "@/services/api";
+import { AIGeneratorCard } from "@/components/AIGeneratorCard";
 
 interface NetworkNode {
   id: string;
@@ -263,7 +264,12 @@ const EDGE_COLORS = {
 
 interface PCDNetworkGraphEditorInnerProps {
   graph: GraphState;
-  onSave: (nodes: Node[], edges: Edge[], name?: string) => Promise<void>;
+  onSave: (
+    nodes: Node[],
+    edges: Edge[],
+    name?: string,
+    systemPrompt?: string,
+  ) => Promise<void>;
 }
 
 const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
@@ -283,6 +289,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
   const [tempGraphName, setTempGraphName] = useState(graph.name);
   const [isPublishing, setIsPublishing] = useState(false);
   const [latestVersion, setLatestVersion] = useState<number | null>(null);
+  const [systemPrompt, setSystemPrompt] = useState(graph.system_prompt || "");
   const {
     isOpen: isHelpOpen,
     onOpen: onHelpOpen,
@@ -292,6 +299,11 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
     isOpen: isVersionHistoryOpen,
     onOpen: onVersionHistoryOpen,
     onOpenChange: onVersionHistoryOpenChange,
+  } = useDisclosure();
+  const {
+    isOpen: isAIGeneratorOpen,
+    onOpen: onAIGeneratorOpen,
+    onOpenChange: onAIGeneratorOpenChange,
   } = useDisclosure();
   const { getViewport } = useReactFlow();
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -694,13 +706,13 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
     try {
       setGraphName(tempGraphName);
 
-      await onSave(nodes, edges, tempGraphName);
+      await onSave(nodes, edges, tempGraphName, systemPrompt);
       setIsEditingName(false);
     } catch (error) {
       console.error("Failed to save graph name:", error);
       setIsEditingName(false);
     }
-  }, [tempGraphName, graph.graph_id, nodes, edges, onSave]);
+  }, [tempGraphName, graph.graph_id, nodes, edges, systemPrompt, onSave]);
 
   // Handle canceling name edit
   const handleCancelNameEdit = useCallback(() => {
@@ -973,7 +985,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
     // Debounce save by 1 second
     saveTimeoutRef.current = setTimeout(async () => {
       try {
-        await onSave(nodes, edges);
+        await onSave(nodes, edges, graphName, systemPrompt);
       } catch (error) {
         console.error("Failed to save graph:", error);
       }
@@ -984,7 +996,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [nodes, edges, isLoaded, graph.graph_id, onSave]);
+  }, [nodes, edges, graphName, systemPrompt, isLoaded, graph.graph_id, onSave]);
 
   // Don't render until graph is loaded to prevent autosave of empty canvas
   if (!isLoaded) {
@@ -1062,8 +1074,15 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
         </Button>
       </div>
 
-      {/* Publish Button */}
-      <div className="absolute top-4 right-4 z-20">
+      {/* AI Generator and Publish Buttons */}
+      <div className="absolute top-4 right-4 z-20 flex gap-2">
+        <Button
+          isIconOnly
+          className="shadow-lg bg-purple-500 text-white h-10 w-10"
+          onPress={onAIGeneratorOpen}
+        >
+          ✨
+        </Button>
         <Button
           className="shadow-lg text-white px-8"
           color="success"
@@ -1175,6 +1194,27 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
           ?
         </Button>
       </div>
+
+      {/* AI Generator Modal */}
+      <AIGeneratorCard
+        graphId={graph.graph_id}
+        isOpen={isAIGeneratorOpen}
+        systemPrompt={systemPrompt}
+        onBeforeGenerate={async () => {
+          // Trigger autosave before generation
+          await onSave(nodes, edges, graphName, systemPrompt);
+        }}
+        onGenerate={async (prompt) => {
+          const result = await apiService.generateFromGraph(
+            graph.graph_id,
+            prompt,
+          );
+
+          console.log({result});
+        }}
+        onOpenChange={onAIGeneratorOpenChange}
+        onSystemPromptChange={setSystemPrompt}
+      />
 
       {/* Version History Modal */}
       <Modal
@@ -1349,7 +1389,12 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
 
 interface PCDNetworkGraphEditorProps {
   graph: GraphState;
-  onSave: (nodes: Node[], edges: Edge[], name?: string) => Promise<void>;
+  onSave: (
+    nodes: Node[],
+    edges: Edge[],
+    name?: string,
+    systemPrompt?: string,
+  ) => Promise<void>;
 }
 
 const PCDNetworkGraphEditor: React.FC<PCDNetworkGraphEditorProps> = ({

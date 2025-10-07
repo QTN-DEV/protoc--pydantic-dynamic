@@ -11,6 +11,7 @@ class Graph(Document):
     nodes: list[dict[str, Any]] = Field(default_factory=list)
     edges: list[dict[str, Any]] = Field(default_factory=list)
     viewport: dict[str, Any] | None = Field(default=None)
+    system_prompt: str = Field(default="")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -27,6 +28,28 @@ class Graph(Document):
                 "viewport": {"x": 0, "y": 0, "zoom": 1},
             },
         }
+
+    def _sanitize_to_camel_case(self, name: str) -> str:
+        """Convert a name to camelCase, removing spaces and special characters."""
+        # Remove or replace special characters, keep alphanumeric and spaces
+        cleaned = "".join(c if c.isalnum() or c.isspace() else "" for c in name)
+
+        # Split by spaces and convert to camelCase
+        words = cleaned.split()
+        if not words:
+            return "UnnamedClass"
+
+        # First word lowercase (or keep as-is if already has capitals)
+        # Remaining words capitalize first letter
+        result = words[0]
+        for word in words[1:]:
+            result += word.capitalize()
+
+        # Ensure it starts with a letter
+        if result and not result[0].isalpha():
+            result = "Class" + result
+
+        return result or "UnnamedClass"
 
     async def get_pydantic_class(self) -> type[BaseModel]:
         """
@@ -67,11 +90,14 @@ class Graph(Document):
 
             # Use the node's name or PydanticDynamicClass name as attribute name
             attr_name = node.get("data", {}).get("label", pdc.name)
-            # Sanitize attribute name (replace spaces/special chars with underscores)
-            attr_name = "".join(c if c.isalnum() or c == "_" else "_" for c in attr_name)
+            # Sanitize attribute name to camelCase
+            attr_name = self._sanitize_to_camel_case(attr_name)
 
             # Add as optional nested field
             fields[attr_name] = (node_class | None, None)
 
+        # Sanitize class name to camelCase
+        class_name = self._sanitize_to_camel_case(self.name)
+
         # Create the Pydantic model dynamically
-        return type(self.name, (BaseModel,), {"__annotations__": fields})
+        return type(class_name, (BaseModel,), {"__annotations__": fields})

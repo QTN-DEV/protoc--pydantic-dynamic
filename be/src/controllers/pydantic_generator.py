@@ -28,6 +28,30 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
+def _sanitize_to_camel_case(name: str) -> str:
+    """Convert a name to camelCase, removing spaces and special characters."""
+    # Remove or replace special characters, keep alphanumeric and spaces
+    cleaned = "".join(c if c.isalnum() or c.isspace() else "" for c in name)
+
+    # Split by spaces and convert to camelCase
+    words = cleaned.split()
+    if not words:
+        return "UnnamedField"
+
+    # First word lowercase (or keep as-is if already has capitals)
+    # Remaining words capitalize first letter
+    result = words[0]
+    for word in words[1:]:
+        result += word.capitalize()
+
+    # Ensure it starts with a letter
+    if result and not result[0].isalpha():
+        result = "Field" + result
+
+    return result or "UnnamedField"
+
+
 def _get_field_type_and_default(attr: PydanticAttribute) -> tuple[type, object]:
     """Helper function to determine field type and default value for an attribute."""
     if attr.type == AttributeType.STRING:
@@ -108,7 +132,11 @@ def _handle_nested_type(attr: PydanticAttribute) -> tuple[type, object]:
     if not attr.nested_attributes:
         raise NestedAttributeRequiredError()
 
-    nested_class_name = f"{attr.name.capitalize()}"
+    # Sanitize nested class name
+    nested_class_name = _sanitize_to_camel_case(attr.name)
+    # Capitalize first letter for class name
+    nested_class_name = nested_class_name[0].upper() + nested_class_name[1:] if nested_class_name else "NestedClass"
+
     nested_model = create_pydantic_model_from_attributes(
         nested_class_name, attr.nested_attributes,
     )
@@ -126,7 +154,12 @@ def _handle_list_nested_type(attr: PydanticAttribute) -> tuple[type, object]:
     if not attr.nested_attributes:
         raise NestedAttributeRequiredError()
 
-    nested_class_name = f"{attr.name.capitalize()}Item"
+    # Sanitize nested class name
+    nested_class_name = _sanitize_to_camel_case(attr.name)
+    # Capitalize first letter and add "Item" suffix for class name
+    nested_class_name = nested_class_name[0].upper() + nested_class_name[1:] if nested_class_name else "ListItem"
+    nested_class_name += "Item"
+
     nested_model = create_pydantic_model_from_attributes(
         nested_class_name, attr.nested_attributes,
     )
@@ -150,11 +183,18 @@ def create_pydantic_model_from_attributes(
 ) -> type[BaseModel]:
     fields = {}
 
+    # Sanitize class name
+    sanitized_class_name = _sanitize_to_camel_case(class_name)
+    # Ensure first letter is capitalized for class names
+    sanitized_class_name = sanitized_class_name[0].upper() + sanitized_class_name[1:] if sanitized_class_name else "DynamicModel"
+
     for attr in attributes:
         field_type, default_value = _get_field_type_and_default(attr)
-        fields[attr.name] = (field_type, default_value)
+        # Sanitize attribute name
+        sanitized_attr_name = _sanitize_to_camel_case(attr.name)
+        fields[sanitized_attr_name] = (field_type, default_value)
 
-    return create_model(class_name, **fields)
+    return create_model(sanitized_class_name, **fields)
 
 @router.post("/generate", response_model=GenerateResponse)
 async def generate_pydantic(request: Request) -> GenerateResponse:
