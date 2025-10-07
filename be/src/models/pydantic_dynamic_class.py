@@ -32,8 +32,7 @@ class PydanticDynamicClass(Document):
                     {
                         "id": "attr1",
                         "type": "attributeNode",
-                        "position": {"x": 100, "y": 100},
-                    }
+                    },
                 ],
                 "edges": [{"id": "edge1", "source": "attr1", "target": "attr2"}],
             },

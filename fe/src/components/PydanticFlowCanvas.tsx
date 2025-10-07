@@ -34,6 +34,145 @@ const nodeTypes = {
   attribute: AttributeNode,
 };
 
+/**
+ * Calculate tree layout positions for nodes
+ * Arranges nodes in a hierarchical tree structure with smart horizontal spacing
+ */
+const calculateTreeLayout = (nodes: Node[], edges: Edge[]): Node[] => {
+  const NODE_WIDTH = 400; // Approximate width of a single node
+  const MIN_SIBLING_GAP = 50; // Minimum gap between siblings
+  const FIRST_LEVEL_SPACING = 350; // Space from root to first level
+  const NESTED_LEVEL_SPACING = 500; // Space for nested levels
+  const ROOT_X = 400;
+  const ROOT_Y = 50;
+
+  // Create a map to track processed nodes
+  const nodesWithPosition = new Map<string, Node>();
+
+  // Find root node (class-definition)
+  const rootNode = nodes.find((n) => n.id === "class-definition");
+
+  if (!rootNode) return nodes;
+
+  // Build adjacency map for children
+  const childrenMap = new Map<string, string[]>();
+
+  edges.forEach((edge) => {
+    const children = childrenMap.get(edge.source) || [];
+
+    children.push(edge.target);
+    childrenMap.set(edge.source, children);
+  });
+
+  // Calculate subtree width for each node (bottom-up)
+  const subtreeWidths = new Map<string, number>();
+
+  const calculateSubtreeWidth = (nodeId: string): number => {
+    const childIds = childrenMap.get(nodeId) || [];
+
+    if (childIds.length === 0) {
+      // Leaf node - just its own width
+      subtreeWidths.set(nodeId, NODE_WIDTH);
+
+      return NODE_WIDTH;
+    }
+
+    // Calculate width needed for all children
+    let totalChildrenWidth = 0;
+
+    childIds.forEach((childId, index) => {
+      const childWidth = calculateSubtreeWidth(childId);
+
+      totalChildrenWidth += childWidth;
+
+      // Add gap between siblings (but not after last child)
+      if (index < childIds.length - 1) {
+        totalChildrenWidth += MIN_SIBLING_GAP;
+      }
+    });
+
+    // Subtree width is the max of node width and total children width
+    const width = Math.max(NODE_WIDTH, totalChildrenWidth);
+
+    subtreeWidths.set(nodeId, width);
+
+    return width;
+  };
+
+  // Calculate all subtree widths starting from leaves
+  calculateSubtreeWidth("class-definition");
+
+  // Position root node
+  nodesWithPosition.set(rootNode.id, {
+    ...rootNode,
+    position: { x: ROOT_X, y: ROOT_Y },
+  });
+
+  // Calculate positions recursively based on parent position and subtree widths
+  const calculateLevel = (
+    parentId: string,
+    parentX: number,
+    parentY: number,
+    isFirstLevel: boolean,
+  ) => {
+    const childIds = childrenMap.get(parentId) || [];
+
+    if (childIds.length === 0) return;
+
+    // Use different spacing for first level vs nested levels
+    const verticalSpacing = isFirstLevel
+      ? FIRST_LEVEL_SPACING
+      : NESTED_LEVEL_SPACING;
+
+    // Position children relative to parent's Y position
+    const childY = parentY + verticalSpacing;
+
+    // Calculate total width needed for all children
+    let totalChildrenWidth = 0;
+
+    childIds.forEach((childId, index) => {
+      const childWidth = subtreeWidths.get(childId) || NODE_WIDTH;
+
+      totalChildrenWidth += childWidth;
+
+      if (index < childIds.length - 1) {
+        totalChildrenWidth += MIN_SIBLING_GAP;
+      }
+    });
+
+    // Start positioning from the left edge
+    let currentX = parentX - totalChildrenWidth / 2;
+
+    childIds.forEach((childId) => {
+      const childNode = nodes.find((n) => n.id === childId);
+
+      if (!childNode) return;
+
+      const childWidth = subtreeWidths.get(childId) || NODE_WIDTH;
+
+      // Position child at the center of its allocated width
+      const childCenterX = currentX + childWidth / 2;
+
+      nodesWithPosition.set(childId, {
+        ...childNode,
+        position: { x: childCenterX, y: childY },
+      });
+
+      // Recursively position this child's children (no longer first level)
+      calculateLevel(childId, childCenterX, childY, false);
+
+      // Move to next sibling's position
+      currentX += childWidth + MIN_SIBLING_GAP;
+    });
+  };
+
+  // Start from root level
+  calculateLevel("class-definition", ROOT_X, ROOT_Y, true);
+
+  // Return nodes with calculated positions, preserving order
+  return nodes.map((node) => nodesWithPosition.get(node.id) || node);
+};
+
 interface PydanticFlowCanvasProps {
   onSubmit: (data: PydanticClassRequest) => Promise<GenerateResponse>;
   isLoading: boolean;
@@ -111,7 +250,7 @@ const PydanticFlowCanvasInner: React.FC<PydanticFlowCanvasInnerProps> = ({
       if (parentId === "class-definition") {
         // For main attributes, position them in a row below the class
         const baseX = 100;
-        const baseY = parentNode.position.y + 250;
+        const baseY = parentNode.position.y + 350; // First level spacing
 
         position = {
           x: baseX + siblingAttributes.length * 450,
@@ -120,7 +259,7 @@ const PydanticFlowCanvasInner: React.FC<PydanticFlowCanvasInnerProps> = ({
       } else {
         // For nested attributes, position them below the parent attribute
         const baseX = parentNode.position.x;
-        const baseY = parentNode.position.y + 250;
+        const baseY = parentNode.position.y + 500; // Nested level spacing
 
         position = {
           x: baseX + siblingAttributes.length * 450,
@@ -248,19 +387,19 @@ const PydanticFlowCanvasInner: React.FC<PydanticFlowCanvasInnerProps> = ({
 
         // Load saved nodes and edges
         if (pcdData.nodes && pcdData.nodes.length > 0) {
-          setNodes(pcdData.nodes);
+          // Calculate tree layout positions (backend no longer stores positions)
+          const nodesWithLayout = calculateTreeLayout(
+            pcdData.nodes,
+            pcdData.edges || [],
+          );
+
+          setNodes(nodesWithLayout);
           setEdges(pcdData.edges || []);
 
-          // Restore viewport if available
-          if (pcdData.viewport && pcdData.viewport !== null) {
-            setTimeout(() => {
-              reactFlowInstance.setViewport({
-                x: pcdData.viewport!.x,
-                y: pcdData.viewport!.y,
-                zoom: pcdData.viewport!.zoom,
-              });
-            }, 0);
-          }
+          // Use fitView to center the tree layout
+          setTimeout(() => {
+            reactFlowInstance.fitView({ padding: 0.2 });
+          }, 0);
         } else {
           // No saved data, initialize with default nodes
           setNodes([
@@ -315,15 +454,13 @@ const PydanticFlowCanvasInner: React.FC<PydanticFlowCanvasInnerProps> = ({
 
     // Set new timeout for auto-save (1 second debounce)
     autoSaveTimeoutRef.current = setTimeout(() => {
-      const viewport = reactFlowInstance.getViewport();
-
       apiService
         .savePCD(
           nodeId,
           graphId,
           nodes,
           edges,
-          viewport,
+          null, // No viewport - positions calculated on load
           className || "Untitled PCD",
         )
         .catch((error) => {

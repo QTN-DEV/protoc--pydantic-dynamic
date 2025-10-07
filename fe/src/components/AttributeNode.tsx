@@ -25,7 +25,7 @@ const AttributeNode: React.FC<NodeProps> = ({ data, id }) => {
   const { addAttribute, updateAttribute, removeAttribute } = usePydanticFlow();
 
   return (
-    <div className="min-w-[263px]">
+    <div className="min-w-[300px]">
       <Handle position={Position.Top} type="target" />
 
       <Card

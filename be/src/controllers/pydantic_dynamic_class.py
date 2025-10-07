@@ -46,6 +46,11 @@ async def get_pcd(node_id: str) -> PCDStateResponse:
 @router.post("/pcd/{node_id}", response_model=PCDStateResponse)
 async def save_pcd(node_id: str, state: PCDStateRequest) -> PCDStateResponse:
     """Save or update PCD state (auto-save endpoint)"""
+    # Strip position data from nodes - positions will be calculated on frontend
+    nodes_without_positions = [
+        {k: v for k, v in node.items() if k != "position"} for node in state.nodes
+    ]
+
     pcd = await PydanticDynamicClass.find_one(PydanticDynamicClass.node_id == node_id)
 
     if pcd:
@@ -53,7 +58,7 @@ async def save_pcd(node_id: str, state: PCDStateRequest) -> PCDStateResponse:
         if state.name is not None:
             pcd.name = state.name
         pcd.graph_id = state.graph_id
-        pcd.nodes = state.nodes
+        pcd.nodes = nodes_without_positions
         pcd.edges = state.edges
         pcd.updated_at = datetime.now(timezone.utc)
         await pcd.save()
@@ -63,7 +68,7 @@ async def save_pcd(node_id: str, state: PCDStateRequest) -> PCDStateResponse:
             node_id=node_id,
             graph_id=state.graph_id,
             name=state.name or "Untitled PCD",
-            nodes=state.nodes,
+            nodes=nodes_without_positions,
             edges=state.edges,
         )
         await pcd.insert()

@@ -42,7 +42,6 @@ export interface PCDState {
   name: string;
   nodes: Node[];
   edges: Edge[];
-  viewport: { x: number; y: number; zoom: number } | null;
   updated_at: string;
 }
 
@@ -239,7 +238,7 @@ export const apiService = {
         name,
         nodes,
         edges,
-        viewport,
+        // viewport removed - positions calculated dynamically on load
       }),
     });
 
