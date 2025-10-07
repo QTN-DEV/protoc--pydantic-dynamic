@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Swal from "sweetalert2";
 
-import { renderHumanFriendlyData } from "@/utils/rendering";
+import { renderHumanFriendlyData } from "../../utils/rendering";
 
 interface ResponseSidebarProps {
   response: any;

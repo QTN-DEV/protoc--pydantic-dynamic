@@ -2,9 +2,9 @@ import { useState, useCallback } from "react";
 import { Node, Edge, Connection, useReactFlow } from "@xyflow/react";
 import { v7 as uuidv7 } from "uuid";
 
-import { NetworkNodeData, ConnectionType } from "@/types/node";
-import { createEdgeConfig, getEdgeType } from "@/utils/edge";
-import { NODE_DIMENSIONS } from "@/constants/graph";
+import { NetworkNodeData, ConnectionType } from "../types/node";
+import { createEdgeConfig, getEdgeType } from "../utils/edge";
+import { NODE_DIMENSIONS } from "../constants/graph";
 
 interface UseGraphEditorProps {
   initialNodes: Node[];
@@ -22,28 +22,25 @@ export const useGraphEditor = ({
   const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
   const { getViewport } = useReactFlow();
 
-  const updateNodeName = useCallback(
-    (nodeId: string, name: string) => {
-      setNodes((nds) =>
-        nds.map((node) => {
-          if (node.id === nodeId) {
-            const nodeData = node.data as unknown as NetworkNodeData;
+  const updateNodeName = useCallback((nodeId: string, name: string) => {
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === nodeId) {
+          const nodeData = node.data as unknown as NetworkNodeData;
 
-            return {
-              ...node,
-              data: {
-                ...nodeData,
-                node: { ...nodeData.node, name },
-              },
-            };
-          }
+          return {
+            ...node,
+            data: {
+              ...nodeData,
+              node: { ...nodeData.node, name },
+            },
+          };
+        }
 
-          return node;
-        }),
-      );
-    },
-    [],
-  );
+        return node;
+      }),
+    );
+  }, []);
 
   const deleteNode = useCallback((nodeId: string) => {
     setNodes((nds) => nds.filter((node) => node.id !== nodeId));
@@ -182,30 +179,33 @@ export const useGraphEditor = ({
     [selectedEdge],
   );
 
-  const reverseEdge = useCallback((edgeId: string) => {
-    setEdges((eds) =>
-      eds.map((edge) => {
-        if (edge.id === edgeId) {
-          return {
-            ...edge,
-            source: edge.target,
-            target: edge.source,
-          };
-        }
+  const reverseEdge = useCallback(
+    (edgeId: string) => {
+      setEdges((eds) =>
+        eds.map((edge) => {
+          if (edge.id === edgeId) {
+            return {
+              ...edge,
+              source: edge.target,
+              target: edge.source,
+            };
+          }
 
-        return edge;
-      }),
-    );
+          return edge;
+        }),
+      );
 
-    // Update selected edge reference
-    if (selectedEdge && selectedEdge.id === edgeId) {
-      setSelectedEdge({
-        ...selectedEdge,
-        source: selectedEdge.target,
-        target: selectedEdge.source,
-      });
-    }
-  }, [selectedEdge]);
+      // Update selected edge reference
+      if (selectedEdge && selectedEdge.id === edgeId) {
+        setSelectedEdge({
+          ...selectedEdge,
+          source: selectedEdge.target,
+          target: selectedEdge.source,
+        });
+      }
+    },
+    [selectedEdge],
+  );
 
   return {
     nodes,

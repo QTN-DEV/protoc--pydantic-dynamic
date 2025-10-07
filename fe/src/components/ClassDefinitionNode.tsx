@@ -1,7 +1,7 @@
 import React from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 
-import { usePydanticFlow } from "@/contexts/PydanticFlowContext";
+import { usePydanticFlow } from "../contexts/PydanticFlowContext";
 
 interface ClassDefinitionNodeData {
   className: string;

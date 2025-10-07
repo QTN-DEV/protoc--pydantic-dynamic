@@ -2,8 +2,8 @@ import { useParams } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { Edge, Node } from "@xyflow/react";
 
-import GraphEditor from "@/features/graph-editor/GraphEditor";
-import { apiService, GraphState } from "@/services/api";
+import GraphEditor from "../features/graph-editor/GraphEditor";
+import { apiService, GraphState } from "../services/api";
 
 export default function GraphPage() {
   const { graph_id } = useParams<{ graph_id: string }>();

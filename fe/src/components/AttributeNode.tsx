@@ -1,8 +1,8 @@
 import React from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 
-import { AttributeType, PydanticAttribute } from "@/types/pydantic";
-import { usePydanticFlow } from "@/contexts/PydanticFlowContext";
+import { AttributeType, PydanticAttribute } from "../types/pydantic";
+import { usePydanticFlow } from "../contexts/PydanticFlowContext";
 
 interface AttributeNodeData {
   attribute: PydanticAttribute;

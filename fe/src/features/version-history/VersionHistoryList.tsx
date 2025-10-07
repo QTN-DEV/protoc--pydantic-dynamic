@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect } from "react";
 
-import { apiService } from "@/services/api";
-import { VersionHistory } from "@/types/graph";
-import { VERSION_HISTORY_LIMIT } from "@/constants/graph";
+import { apiService } from "../../services/api";
+import { VersionHistory } from "../../types/graph";
+import { VERSION_HISTORY_LIMIT } from "../../constants/graph";
 
 interface VersionHistoryListProps {
   graphId: string;

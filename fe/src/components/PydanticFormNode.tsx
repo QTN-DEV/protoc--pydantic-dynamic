@@ -1,9 +1,10 @@
 import React from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 
+import { PydanticClassRequest, GenerateResponse } from "../types/pydantic";
+
 import PydanticForm from "./PydanticForm";
 
-import { PydanticClassRequest, GenerateResponse } from "@/types/pydantic";
 
 interface PydanticFormNodeData {
   onSubmit: (

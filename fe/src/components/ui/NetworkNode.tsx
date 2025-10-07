@@ -1,7 +1,7 @@
 import React from "react";
 import { Handle, Position } from "@xyflow/react";
 
-import { NetworkNodeData } from "@/types/node";
+import { NetworkNodeData } from "../../types/node";
 
 interface NetworkNodeProps {
   data: NetworkNodeData;

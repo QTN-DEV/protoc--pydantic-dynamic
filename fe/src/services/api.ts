@@ -1,16 +1,16 @@
 import { Node, Edge } from "@xyflow/react";
 
-import { PydanticClassRequest } from "@/types/pydantic";
+import { PydanticClassRequest } from "../types/pydantic";
 import {
   GraphState,
   PublishResponse,
   LatestVersionResponse,
   VersionHistory,
   PCDState,
-} from "@/types/graph";
-import { GenerateResponse, GenerateFromGraphResponse } from "@/types/api";
-import { API_BASE_URL } from "@/constants/api";
-import { serializeAttribute } from "@/utils/serialization";
+} from "../types/graph";
+import { GenerateResponse, GenerateFromGraphResponse } from "../types/api";
+import { API_BASE_URL } from "../constants/api";
+import { serializeAttribute } from "../utils/serialization";
 
 export type { GraphState, VersionHistory, PCDState };
 

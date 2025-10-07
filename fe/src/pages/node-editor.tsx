@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 
-import PydanticFlowCanvas from "@/components/PydanticFlowCanvas";
-import { apiService } from "@/services/api";
-import { PydanticClassRequest, GenerateResponse } from "@/types/pydantic";
+import PydanticFlowCanvas from "../components/PydanticFlowCanvas";
+import { apiService } from "../services/api";
+import { PydanticClassRequest, GenerateResponse } from "../types/pydantic";
 
 export default function NodeEditorPage() {
   const { graph_id, node_id } = useParams<{

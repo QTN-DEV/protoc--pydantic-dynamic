@@ -16,22 +16,22 @@ import "@xyflow/react/dist/style.css";
 import { useNavigate } from "react-router-dom";
 import { v7 as uuidv7 } from "uuid";
 
-import NetworkNode from "@/components/ui/NetworkNode";
-import ResponseSidebar from "@/components/ui/ResponseSidebar";
-import { AIGeneratorCard } from "@/features/ai-generator/AIGeneratorCard";
-import VersionHistoryList from "@/features/version-history/VersionHistoryList";
-import EdgeEditorSidebar from "@/features/graph-editor/components/EdgeEditorSidebar";
-import GraphNameEditor from "@/features/graph-editor/components/GraphNameEditor";
-import HelpModal from "@/features/graph-editor/components/HelpModal";
-import { apiService, GraphState } from "@/services/api";
-import { NetworkNodeData } from "@/types/node";
-import { getEdgeType, createEdgeConfig } from "@/utils/edge";
-import { useGraphVersion } from "@/hooks/useGraphVersion";
+import NetworkNode from "../../components/ui/NetworkNode";
+import ResponseSidebar from "../../components/ui/ResponseSidebar";
+import { AIGeneratorCard } from "../../features/ai-generator/AIGeneratorCard";
+import VersionHistoryList from "../../features/version-history/VersionHistoryList";
+import EdgeEditorSidebar from "../../features/graph-editor/components/EdgeEditorSidebar";
+import GraphNameEditor from "../../features/graph-editor/components/GraphNameEditor";
+import HelpModal from "../../features/graph-editor/components/HelpModal";
+import { apiService, GraphState } from "../../services/api";
+import { NetworkNodeData } from "../../types/node";
+import { getEdgeType, createEdgeConfig } from "../../utils/edge";
+import { useGraphVersion } from "../../hooks/useGraphVersion";
 import {
   NODE_DIMENSIONS,
   AUTOSAVE_DELAY_MS,
   STORAGE_KEYS,
-} from "@/constants/graph";
+} from "../../constants/graph";
 
 const nodeTypes = {
   networkNode: NetworkNode,

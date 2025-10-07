@@ -1,8 +1,8 @@
 import React from "react";
 import { Edge, Node } from "@xyflow/react";
 
-import { NetworkNodeData } from "@/types/node";
-import { getEdgeType } from "@/utils/edge";
+import { NetworkNodeData } from "../../../types/node";
+import { getEdgeType } from "../../../utils/edge";
 
 interface EdgeEditorSidebarProps {
   edge: Edge;

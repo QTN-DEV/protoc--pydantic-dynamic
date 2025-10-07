@@ -1,6 +1,6 @@
 import React, { createContext, useContext } from "react";
 
-import { PydanticAttribute } from "@/types/pydantic";
+import { PydanticAttribute } from "../types/pydantic";
 
 interface PydanticFlowContextValue {
   addAttribute: (parentId: string, isNested?: boolean) => void;

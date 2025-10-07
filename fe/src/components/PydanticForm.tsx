@@ -6,7 +6,7 @@ import {
   PydanticAttribute,
   PydanticClassRequest,
   GenerateResponse,
-} from "@/types/pydantic";
+} from "../types/pydantic";
 
 interface PydanticFormProps {
   onSubmit: (

@@ -15,19 +15,19 @@ import "@xyflow/react/dist/style.css";
 import Swal from "sweetalert2";
 import { v7 as uuidv7 } from "uuid";
 
-import ClassDefinitionNode from "./ClassDefinitionNode";
-import AttributeNode from "./AttributeNode";
-import HierarchySidebar from "./HierarchySidebar";
-import ResponseSidebar from "@/components/ui/ResponseSidebar";
-
+import ResponseSidebar from "../components/ui/ResponseSidebar";
 import {
   PydanticClassRequest,
   GenerateResponse,
   PydanticAttribute,
   AttributeType,
-} from "@/types/pydantic";
-import { apiService } from "@/services/api";
-import { PydanticFlowProvider } from "@/contexts/PydanticFlowContext";
+} from "../types/pydantic";
+import { apiService } from "../services/api";
+import { PydanticFlowProvider } from "../contexts/PydanticFlowContext";
+
+import HierarchySidebar from "./HierarchySidebar";
+import AttributeNode from "./AttributeNode";
+import ClassDefinitionNode from "./ClassDefinitionNode";
 
 const nodeTypes = {
   classDefinition: ClassDefinitionNode,

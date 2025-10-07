@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import Swal from "sweetalert2";
 import { Node, Edge } from "@xyflow/react";
 
-import { apiService } from "@/services/api";
+import { apiService } from "../services/api";
 
 interface UseGraphVersionProps {
   graphId: string;

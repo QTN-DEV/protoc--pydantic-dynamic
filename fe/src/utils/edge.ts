@@ -1,7 +1,7 @@
 import { Edge, MarkerType } from "@xyflow/react";
 
-import { ConnectionType } from "@/types/node";
-import { EDGE_COLORS } from "@/constants/graph";
+import { ConnectionType } from "../types/node";
+import { EDGE_COLORS } from "../constants/graph";
 
 /**
  * Determines the connection type based on edge markers

@@ -1,4 +1,4 @@
-import { PydanticAttribute } from "@/types/pydantic";
+import { PydanticAttribute } from "../types/pydantic";
 
 export const serializeAttribute = (attr: PydanticAttribute): any => ({
   name: attr.name,

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Node, Edge } from "@xyflow/react";
 
-import { PydanticAttribute } from "@/types/pydantic";
+import { PydanticAttribute } from "../types/pydantic";
 
 interface HierarchySidebarProps {
   nodes: Node[];
