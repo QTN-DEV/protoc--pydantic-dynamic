@@ -634,7 +634,29 @@ const PydanticFlowCanvasInner: React.FC<PydanticFlowCanvasInnerProps> = ({
       `}</style>
 
       {/* Hierarchy Sidebar */}
-      <HierarchySidebar className={className} edges={edges} nodes={nodes} />
+      <HierarchySidebar
+        className={className}
+        edges={edges}
+        nodes={nodes}
+        onNodeClick={(nodeId) => {
+          const node = nodes.find((n) => n.id === nodeId);
+
+          if (node) {
+            // Get node dimensions (default to typical AttributeNode size if not measured yet)
+            const nodeWidth = node.measured?.width || 350;
+            const nodeHeight = node.measured?.height || 400;
+
+            // Calculate center point of the node (position is top-left corner)
+            const centerX = node.position.x + nodeWidth / 2;
+            const centerY = node.position.y + nodeHeight / 2;
+
+            reactFlowInstance.setCenter(centerX, centerY, {
+              zoom: 0.8,
+              duration: 800,
+            });
+          }
+        }}
+      />
 
       {/* Response Sidebar */}
       {apiResponse && (

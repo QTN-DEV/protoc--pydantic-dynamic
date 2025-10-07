@@ -25,7 +25,7 @@ const ClassDefinitionNode: React.FC<NodeProps> = ({ data, id }) => {
                 {nodeData.className || "Class Definition"}
               </h3>
               {nodeData.classDescription && (
-                <p className="text-sm text-gray-600 mt-2 max-w-[400px] whitespace-pre-wrap">
+                <p className="text-sm text-gray-600 mt-2 max-w-[400px] max-h-[200px] overflow-y-auto whitespace-pre-wrap">
                   {nodeData.classDescription}
                 </p>
               )}

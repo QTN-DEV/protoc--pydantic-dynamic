@@ -1,6 +1,8 @@
 export enum AttributeType {
   STRING = "string",
   INT = "int",
+  FLOAT = "float",
+  BOOLEAN = "boolean",
   NESTED = "nested",
   LIST_STRING = "list_string",
   LIST_NESTED = "list_nested",
@@ -11,7 +13,7 @@ export interface PydanticAttribute {
   type: AttributeType;
   nullable: boolean;
   description: string;
-  defaultValue?: string | number | null;
+  defaultValue?: string | number | boolean | null;
   nestedAttributes?: PydanticAttribute[];
 }
 

@@ -201,13 +201,11 @@ export default function NodeEditorPage() {
         </div>
 
         {/* Node Description */}
-        <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-gray-200 max-w-[400px]">
+        <div className="bg-white/95 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-gray-200 max-w-[400px] max-h-[200px] overflow-y-auto">
           {isEditingDescription ? (
             <textarea
               ref={descriptionInputRef}
-              className="text-sm text-gray-800 bg-transparent border-none outline-none focus:ring-0 w-full resize-none"
-              rows={3}
-              style={{ minWidth: "200px" }}
+              className="text-sm text-gray-800 bg-transparent border-none outline-none focus:ring-0 resize-none w-[calc(400px-(var(--spacing)*4*3))] h-[calc(200px-(var(--spacing)*4*2))]"
               value={tempDescription}
               onBlur={handleSaveDescription}
               onChange={(e) => setTempDescription(e.target.value)}
@@ -219,7 +217,7 @@ export default function NodeEditorPage() {
             />
           ) : (
             <button
-              className="text-sm text-gray-800 cursor-pointer hover:text-blue-600 transition-colors bg-transparent border-none w-full text-left"
+              className="text-sm text-gray-800 cursor-pointer hover:text-blue-600 transition-colors bg-transparent border-none w-full text-left whitespace-pre-wrap"
               tabIndex={0}
               type="button"
               onClick={handleDescriptionClick}

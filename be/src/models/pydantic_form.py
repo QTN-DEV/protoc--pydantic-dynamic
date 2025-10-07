@@ -7,6 +7,8 @@ from pydantic import BaseModel, Field
 class AttributeType(str, Enum):
     STRING = "string"
     INT = "int"
+    FLOAT = "float"
+    BOOLEAN = "boolean"
     NESTED = "nested"
     LIST_STRING = "list_string"
     LIST_NESTED = "list_nested"
@@ -16,7 +18,7 @@ class PydanticAttribute(BaseModel):
     type: AttributeType
     nullable: bool
     description: str
-    default_value: str | int | None = Field(None, alias="defaultValue")
+    default_value: str | int | float | bool | None = Field(None, alias="defaultValue")
     nested_attributes: list['PydanticAttribute'] | None = Field(None, alias="nestedAttributes")
 
     class Config:

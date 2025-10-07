@@ -75,6 +75,8 @@ const AttributeNode: React.FC<NodeProps> = ({ data, id }) => {
             >
               <SelectItem key={AttributeType.STRING}>String</SelectItem>
               <SelectItem key={AttributeType.INT}>Integer</SelectItem>
+              <SelectItem key={AttributeType.FLOAT}>Float</SelectItem>
+              <SelectItem key={AttributeType.BOOLEAN}>Boolean</SelectItem>
               <SelectItem key={AttributeType.LIST_STRING}>
                 List of String
               </SelectItem>
@@ -111,11 +113,14 @@ const AttributeNode: React.FC<NodeProps> = ({ data, id }) => {
               required
               label="Description"
               minRows={2}
+              maxRows={5}
               placeholder="Describe this attribute"
               size="sm"
               value={attribute.description}
               variant="bordered"
-              onChange={(e) => updateAttribute(id, "description", e.target.value)}
+              onChange={(e) =>
+                updateAttribute(id, "description", e.target.value)
+              }
             />
 
             {(attribute.type === AttributeType.NESTED ||

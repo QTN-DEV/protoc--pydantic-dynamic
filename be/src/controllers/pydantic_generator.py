@@ -34,6 +34,10 @@ def _get_field_type_and_default(attr: PydanticAttribute) -> tuple[type, object]:
         return _handle_string_type(attr)
     if attr.type == AttributeType.INT:
         return _handle_int_type(attr)
+    if attr.type == AttributeType.FLOAT:
+        return _handle_float_type(attr)
+    if attr.type == AttributeType.BOOLEAN:
+        return _handle_boolean_type(attr)
     if attr.type == AttributeType.NESTED:
         return _handle_nested_type(attr)
     if attr.type == AttributeType.LIST_STRING:
@@ -65,6 +69,36 @@ def _handle_int_type(attr: PydanticAttribute) -> tuple[type, object]:
         field_type = int | None
     if attr.default_value:
         default_value = int(attr.default_value)
+    elif attr.nullable:
+        default_value = None
+
+    return field_type, default_value
+
+def _handle_float_type(attr: PydanticAttribute) -> tuple[type, object]:
+    field_type = float
+    default_value = ...
+
+    if attr.nullable:
+        field_type = float | None
+    if attr.default_value:
+        default_value = float(attr.default_value)
+    elif attr.nullable:
+        default_value = None
+
+    return field_type, default_value
+
+def _handle_boolean_type(attr: PydanticAttribute) -> tuple[type, object]:
+    field_type = bool
+    default_value = ...
+
+    if attr.nullable:
+        field_type = bool | None
+    if attr.default_value is not None:
+        # Handle string representations of boolean
+        if isinstance(attr.default_value, str):
+            default_value = attr.default_value.lower() in ('true', '1', 'yes')
+        else:
+            default_value = bool(attr.default_value)
     elif attr.nullable:
         default_value = None
 

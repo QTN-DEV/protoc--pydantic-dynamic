@@ -15,6 +15,7 @@ import {
   EdgeMouseHandler,
   useReactFlow,
   ReactFlowProvider,
+  MiniMap,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import {
@@ -229,7 +230,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [graphName, setGraphName] = useState(graph.name);
   const [isEditingName, setIsEditingName] = useState(false);
-  const [tempGraphName, setTempGraphName] = useState("");
+  const [tempGraphName, setTempGraphName] = useState(graph.name);
   const [isPublishing, setIsPublishing] = useState(false);
   const [latestVersion, setLatestVersion] = useState<number | null>(null);
   const {
@@ -772,15 +773,9 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
   useEffect(() => {
     const loadGraphState = async () => {
       try {
-        const graphState = await apiService.loadGraph(graph.graph_id);
-
-        // Set graph name
-        setGraphName(graphState.name);
-        setTempGraphName(graphState.name);
-
-        if (graphState.nodes.length > 0 || graphState.edges.length > 0) {
+        if (graph.nodes.length > 0 || graph.edges.length > 0) {
           // Restore nodes with proper callbacks
-          const restoredNodes = graphState.nodes.map((node: any) => ({
+          const restoredNodes = graph.nodes.map((node: any) => ({
             ...node,
             data: {
               node: node.data.node || { id: node.id, name: "" },
@@ -791,12 +786,11 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
           }));
 
           setNodes(restoredNodes);
-          setEdges(graphState.edges);
 
           // Restore viewport if available
-          if (graphState.viewport) {
+          if (graph.viewport) {
             setTimeout(() => {
-              setViewport(graphState.viewport!, { duration: 300 });
+              setViewport(graph.viewport!, { duration: 300 });
             }, 100);
           }
         }
@@ -1046,6 +1040,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
       >
         <Background />
         <Controls />
+        <MiniMap />
       </ReactFlow>
 
       {/* Help Button */}
