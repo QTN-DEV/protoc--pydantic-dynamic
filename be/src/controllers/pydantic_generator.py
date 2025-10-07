@@ -192,7 +192,8 @@ def create_pydantic_model_from_attributes(
         field_type, default_value = _get_field_type_and_default(attr)
         # Sanitize attribute name
         sanitized_attr_name = _sanitize_to_camel_case(attr.name)
-        fields[sanitized_attr_name] = (field_type, default_value)
+        # TODO: no default value for now
+        fields[sanitized_attr_name] = field_type
 
     return create_model(sanitized_class_name, **fields)
 

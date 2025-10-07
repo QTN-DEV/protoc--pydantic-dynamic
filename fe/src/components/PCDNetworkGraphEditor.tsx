@@ -36,6 +36,7 @@ import { useNavigate } from "react-router-dom";
 
 import { apiService, GraphState, VersionHistory } from "@/services/api";
 import { AIGeneratorCard } from "@/components/AIGeneratorCard";
+import ResponseSidebar from "@/components/ResponseSidebar";
 
 interface NetworkNode {
   id: string;
@@ -290,6 +291,7 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
   const [isPublishing, setIsPublishing] = useState(false);
   const [latestVersion, setLatestVersion] = useState<number | null>(null);
   const [systemPrompt, setSystemPrompt] = useState(graph.system_prompt || "");
+  const [generationResponse, setGenerationResponse] = useState<any>(null);
   const {
     isOpen: isHelpOpen,
     onOpen: onHelpOpen,
@@ -312,7 +314,6 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
   const handleEditNode = useCallback(
     async (nodeId: string) => {
       try {
-        await onSave(nodes, edges);
         navigate(`/${graph.graph_id}/${nodeId}`);
       } catch (error) {
         console.error("Failed to save graph before editing:", error);
@@ -1210,11 +1211,23 @@ const PCDNetworkGraphEditorInner: React.FC<PCDNetworkGraphEditorInnerProps> = ({
             prompt,
           );
 
-          console.log({result});
+          // Show the result in ResponseSidebar
+          setGenerationResponse(result);
+
+          // Close the AI Generator modal
+          onAIGeneratorOpenChange();
         }}
         onOpenChange={onAIGeneratorOpenChange}
         onSystemPromptChange={setSystemPrompt}
       />
+
+      {/* Response Sidebar */}
+      {generationResponse && (
+        <ResponseSidebar
+          response={generationResponse}
+          onClose={() => setGenerationResponse(null)}
+        />
+      )}
 
       {/* Version History Modal */}
       <Modal

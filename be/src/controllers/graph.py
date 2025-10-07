@@ -4,6 +4,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from src.models.generation_graph_snapshot import GenerationGraphSnapshot
 from src.models.graph import Graph
 from src.models.published_graph import PublishedGraph
 from src.models.pydantic_dynamic_class import PydanticDynamicClass
@@ -412,6 +413,9 @@ async def generate_from_graph(
             detail=f"Failed to generate Pydantic class from graph: {e!s}",
         ) from e
 
+    # Get the schema
+    pydantic_schema = pydantic_class.model_json_schema()
+
     # Generate using OpenAI
     try:
         result = await generate(
@@ -421,7 +425,23 @@ async def generate_from_graph(
         )
 
         # Convert result to dict
-        return GenerateResponse(result=result.model_dump())
+        result_dict = result.model_dump()
+
+        # Save generation snapshot
+        snapshot = GenerationGraphSnapshot(
+            graph_id=graph.graph_id,
+            name=graph.name,
+            nodes=graph.nodes,
+            edges=graph.edges,
+            viewport=graph.viewport,
+            system_prompt=graph.system_prompt,
+            user_prompt=request.prompt,
+            pydantic_model_schema=pydantic_schema,
+            generation_result=result_dict,
+        )
+        await snapshot.insert()
+
+        return GenerateResponse(result=result_dict)
     except Exception as e:
         raise HTTPException(
             status_code=500,

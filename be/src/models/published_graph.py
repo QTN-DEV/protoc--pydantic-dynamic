@@ -102,8 +102,8 @@ class PublishedGraph(Document):
             # Sanitize attribute name to camelCase
             attr_name = self._sanitize_to_camel_case(attr_name)
 
-            # Add as optional nested field
-            fields[attr_name] = (node_class | None, None)
+            # Add as required field
+            fields[attr_name] = node_class
 
         # Sanitize class name to camelCase
         class_name = self._sanitize_to_camel_case(self.name)

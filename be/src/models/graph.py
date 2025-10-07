@@ -1,9 +1,11 @@
+import logging
 from datetime import datetime
 from typing import Any, ClassVar
 
 from beanie import Document
 from pydantic import BaseModel, Field
 
+logger = logging.getLogger(__name__)
 
 class Graph(Document):
     graph_id: str = Field(..., index=True, unique=True)
@@ -30,9 +32,13 @@ class Graph(Document):
         }
 
     def _sanitize_to_camel_case(self, name: str) -> str:
-        """Convert a name to camelCase, removing spaces and special characters."""
+        """
+        Convert a name to camelCase, removing spaces and special characters.
+        """
         # Remove or replace special characters, keep alphanumeric and spaces
-        cleaned = "".join(c if c.isalnum() or c.isspace() else "" for c in name)
+        cleaned = "".join(
+            c if c.isalnum() or c.isspace() else "" for c in name
+        )
 
         # Split by spaces and convert to camelCase
         words = cleaned.split()
@@ -70,34 +76,49 @@ class Graph(Document):
             PydanticDynamicClass,
         )
 
-        # Create attributes from each node
+        logger.debug(
+            "Starting to generate Pydantic class for graph_id=%s, name=%s",
+            self.graph_id,
+            self.name,
+        )
+
         fields = {}
         for node in self.nodes:
-            node_id = node.get("data", {}).get("node_id")
+            node_id = node.get("data", {}).get("node", {}).get("id")
             if not node_id:
+                logger.warning("Node missing 'id' in data: %s", node)
                 continue
 
             # Fetch the PydanticDynamicClass for this node
             pdc = await PydanticDynamicClass.find_one(
-                PydanticDynamicClass.node_id == node_id
+                PydanticDynamicClass.node_id == node_id,
             )
             if not pdc:
                 msg = f"PydanticDynamicClass with node_id {node_id} not found"
+                logger.error(msg)
                 raise ValueError(msg)
 
             # Get the Pydantic class for this node
             node_class = pdc.get_pydantic_class()
 
-            # Use the node's name or PydanticDynamicClass name as attribute name
-            attr_name = node.get("data", {}).get("label", pdc.name)
             # Sanitize attribute name to camelCase
-            attr_name = self._sanitize_to_camel_case(attr_name)
+            attr_name = self._sanitize_to_camel_case(pdc.name)
 
-            # Add as optional nested field
-            fields[attr_name] = (node_class | None, None)
+            # Add as required field
+            fields[attr_name] = node_class
+            logger.debug(
+                "Added field '%s' with type '%s' to Pydantic class",
+                attr_name,
+                node_class.__name__,
+            )
 
         # Sanitize class name to camelCase
         class_name = self._sanitize_to_camel_case(self.name)
+        logger.info(
+            "Creating dynamic Pydantic model class '%s' for graph_id=%s",
+            class_name,
+            self.graph_id,
+        )
 
         # Create the Pydantic model dynamically
         return type(class_name, (BaseModel,), {"__annotations__": fields})

@@ -50,7 +50,7 @@ export const AIGeneratorCard: React.FC<AIGeneratorCardProps> = ({
       await Swal.fire({
         icon: "success",
         title: "Generation Complete!",
-        text: "Check the console for the generated result.",
+        text: "Check the response sidebar for the generated result.",
         confirmButtonText: "OK",
       });
 
