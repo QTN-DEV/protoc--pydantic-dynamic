@@ -17,7 +17,6 @@ import ClassDefinitionNode from "./ClassDefinitionNode";
 import AttributeNode from "./AttributeNode";
 import HierarchySidebar from "./HierarchySidebar";
 import ResponseSidebar from "./ResponseSidebar";
-import Navigation from "./Navigation";
 
 import {
   PydanticClassRequest,
@@ -328,9 +327,6 @@ const PydanticFlowCanvas: React.FC<PydanticFlowCanvasProps> = ({
           }
         }
       `}</style>
-
-      {/* Navigation */}
-      <Navigation />
 
       {/* Hierarchy Sidebar */}
       <HierarchySidebar className={className} edges={edges} nodes={nodes} />
