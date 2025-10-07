@@ -1,60 +1,18 @@
 import { Node, Edge } from "@xyflow/react";
 
+import { PydanticClassRequest } from "@/types/pydantic";
 import {
-  PydanticClassRequest,
-  GenerateResponse,
-  PydanticAttribute,
-} from "@/types/pydantic";
+  GraphState,
+  PublishResponse,
+  LatestVersionResponse,
+  VersionHistory,
+  PCDState,
+} from "@/types/graph";
+import { GenerateResponse, GenerateFromGraphResponse } from "@/types/api";
+import { API_BASE_URL } from "@/constants/api";
+import { serializeAttribute } from "@/utils/serialization";
 
-const API_BASE_URL = "http://localhost:8000";
-
-export interface GraphState {
-  graph_id: string;
-  name: string;
-  nodes: Node[];
-  edges: Edge[];
-  viewport: { x: number; y: number; zoom: number } | null;
-  system_prompt: string;
-  updated_at: string;
-}
-
-export interface PublishResponse {
-  graph_id: string;
-  version: number;
-  name: string;
-  published_at: string;
-  message: string;
-}
-
-export interface LatestVersionResponse {
-  version: number | null;
-  published_at: string | null;
-}
-
-export interface VersionHistory {
-  version: number;
-  published_at: string;
-  name: string;
-  is_active: boolean;
-}
-
-export interface PCDState {
-  node_id: string;
-  graph_id: string;
-  name: string;
-  nodes: Node[];
-  edges: Edge[];
-  updated_at: string;
-}
-
-const serializeAttribute = (attr: PydanticAttribute): any => ({
-  name: attr.name,
-  type: attr.type,
-  nullable: attr.nullable,
-  description: attr.description,
-  default_value: attr.defaultValue,
-  nested_attributes: attr.nestedAttributes?.map(serializeAttribute),
-});
+export type { GraphState, VersionHistory, PCDState };
 
 export const apiService = {
   async generatePydantic(
@@ -323,7 +281,7 @@ export const apiService = {
   async generateFromGraph(
     graphId: string,
     prompt: string,
-  ): Promise<{ result: Record<string, any> }> {
+  ): Promise<GenerateFromGraphResponse> {
     const response = await fetch(
       `${API_BASE_URL}/api/graph/${graphId}/generate`,
       {

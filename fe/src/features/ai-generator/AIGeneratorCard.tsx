@@ -108,7 +108,7 @@ export const AIGeneratorCard: React.FC<AIGeneratorCardProps> = ({
       onOpenChange={onOpenChange}
     >
         <ModalContent>
-          {(onClose) => (
+          {() => (
             <>
               <ModalHeader className="flex items-center justify-between">
                 <span>AI Generator</span>

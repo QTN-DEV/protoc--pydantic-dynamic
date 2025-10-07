@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { Edge, Node } from "@xyflow/react";
 
-import PCDNetworkGraphEditor from "@/components/PCDNetworkGraphEditor";
+import GraphEditor from "@/features/graph-editor/GraphEditor";
 import { apiService, GraphState } from "@/services/api";
 
 export default function GraphPage() {
@@ -41,5 +41,5 @@ export default function GraphPage() {
     return <div>Loading...</div>;
   }
 
-  return <PCDNetworkGraphEditor graph={graph} onSave={onSave} />;
+  return <GraphEditor graph={graph} onSave={onSave} />;
 }

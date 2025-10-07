@@ -19,7 +19,7 @@ import { v7 as uuidv7 } from "uuid";
 import ClassDefinitionNode from "./ClassDefinitionNode";
 import AttributeNode from "./AttributeNode";
 import HierarchySidebar from "./HierarchySidebar";
-import ResponseSidebar from "./ResponseSidebar";
+import ResponseSidebar from "@/components/ui/ResponseSidebar";
 
 import {
   PydanticClassRequest,
