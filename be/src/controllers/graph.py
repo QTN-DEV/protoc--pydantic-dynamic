@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from src.models.graph import Graph
+from src.models.pydantic_dynamic_class import PydanticDynamicClass
 from src.models.published_graph import PublishedGraph
 
 router = APIRouter()
@@ -31,6 +32,7 @@ class PublishResponse(BaseModel):
     version: int
     name: str
     published_at: datetime
+    node_definitions_count: int
     message: str
 
 
@@ -127,6 +129,26 @@ async def publish_graph(graph_id: str) -> PublishResponse:
     if not graph:
         raise HTTPException(status_code=404, detail="Graph not found")
 
+    # Fetch all related PydanticDynamicClass documents
+    pydantic_classes = await PydanticDynamicClass.find(
+        PydanticDynamicClass.graph_id == graph_id,
+    ).to_list()
+
+    # Convert PydanticDynamicClass documents to dicts
+    node_definitions = [
+        {
+            "node_id": pdc.node_id,
+            "graph_id": pdc.graph_id,
+            "name": pdc.name,
+            "nodes": pdc.nodes,
+            "edges": pdc.edges,
+            "viewport": pdc.viewport,
+            "created_at": pdc.created_at,
+            "updated_at": pdc.updated_at,
+        }
+        for pdc in pydantic_classes
+    ]
+
     # Find the latest published version for this graph_id
     latest_published = await PublishedGraph.find(
         PublishedGraph.graph_id == graph_id,
@@ -143,6 +165,7 @@ async def publish_graph(graph_id: str) -> PublishResponse:
         nodes=graph.nodes,
         edges=graph.edges,
         viewport=graph.viewport,
+        node_definitions=node_definitions,
     )
     await published_graph.insert()
 
@@ -151,7 +174,8 @@ async def publish_graph(graph_id: str) -> PublishResponse:
         version=published_graph.version,
         name=published_graph.name,
         published_at=published_graph.published_at,
-        message=f"Graph published successfully as version {next_version}",
+        node_definitions_count=len(node_definitions),
+        message=f"Graph published successfully as version {next_version} with {len(node_definitions)} node definition(s)",
     )
 
 
@@ -247,6 +271,24 @@ async def restore_version(graph_id: str, version: int) -> GraphStateResponse:
             viewport=published_version.viewport,
         )
         await graph.insert()
+
+    # Restore node_definitions (PydanticDynamicClass documents)
+    # First, delete all existing PydanticDynamicClass documents for this graph
+    await PydanticDynamicClass.find(
+        PydanticDynamicClass.graph_id == graph_id,
+    ).delete()
+
+    # Then, recreate them from the published node_definitions
+    for node_def in published_version.node_definitions:
+        pdc = PydanticDynamicClass(
+            node_id=node_def["node_id"],
+            graph_id=node_def["graph_id"],
+            name=node_def["name"],
+            nodes=node_def["nodes"],
+            edges=node_def["edges"],
+            viewport=node_def["viewport"],
+        )
+        await pdc.insert()
 
     return GraphStateResponse(
         graph_id=graph.graph_id,

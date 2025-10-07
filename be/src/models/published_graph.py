@@ -12,6 +12,7 @@ class PublishedGraph(Document):
     nodes: list[dict[str, Any]] = Field(default_factory=list)
     edges: list[dict[str, Any]] = Field(default_factory=list)
     viewport: dict[str, Any] | None = Field(default=None)
+    node_definitions: list[dict[str, Any]] = Field(default_factory=list)
     published_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Settings:
@@ -30,5 +31,6 @@ class PublishedGraph(Document):
                 "nodes": [{"id": "node1", "type": "networkNode", "position": {"x": 100, "y": 100}}],
                 "edges": [{"id": "edge1", "source": "node1", "target": "node2"}],
                 "viewport": {"x": 0, "y": 0, "zoom": 1},
+                "node_definitions": [],
             },
         }
